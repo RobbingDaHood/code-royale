@@ -1,5 +1,6 @@
 public enum StructureType {
     NO_STRUCTURE(-1),
+    TOWER(1),
     BARRACKS(2);
 
     public final int type;

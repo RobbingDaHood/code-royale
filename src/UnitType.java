@@ -1,7 +1,8 @@
 public enum UnitType {
     QUEEN(-1, -1),
     KNIGHT(0, 80),
-    ARCHER(1, 100);
+    ARCHER(1, 100),
+    GIANT(2, 140);
 
     public final int type;
     public final int costToTrain;
