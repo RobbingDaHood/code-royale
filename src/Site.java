@@ -1,5 +1,3 @@
-package Models;
-
 import java.awt.*;
 
 public class Site {
@@ -22,7 +20,7 @@ public class Site {
     public Point getPosition() {
         return position;
     }
-    
+
     public int getRadius() {
         return radius;
     }

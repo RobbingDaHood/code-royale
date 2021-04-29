@@ -1,8 +1,3 @@
-package Models;
-
-import Models.Types.OwnerType;
-import Models.Types.UnitType;
-
 import java.awt.*;
 
 public class Unit {

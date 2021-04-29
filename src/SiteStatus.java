@@ -1,9 +1,3 @@
-package Models;
-
-import Models.Types.OwnerType;
-import Models.Types.StructureType;
-import Models.Types.UnitType;
-
 public class SiteStatus {
     int siteId;
     int ignore1; // used in future leagues

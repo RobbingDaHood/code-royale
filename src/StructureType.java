@@ -1,5 +1,3 @@
-package Models.Types;
-
 public enum StructureType {
     NO_STRUCTURE(-1),
     BARRACKS(2);
