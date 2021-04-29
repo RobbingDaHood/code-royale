@@ -1,16 +1,15 @@
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Auto-generated code below aims at helping you parse
  * the standard input according to the problem statement.
  **/
 class Player {
-
-
-    private static UnitType typeToBuildNext = UnitType.ARCHER;
 
     public static void main(String args[]) {
         Scanner in = new Scanner(System.in);
@@ -47,52 +46,73 @@ class Player {
             int numUnits = in.nextInt();
             List<Unit> units = new LinkedList<>();
             Unit ourQueen = null;
+            Unit theirQueen = null;
+            List<Unit> enemyKnights = new LinkedList<>();
             for (int i = 0; i < numUnits; i++) {
                 Unit unit = new Unit(in.nextInt(), in.nextInt(), in.nextInt(), in.nextInt(), in.nextInt());
                 units.add(unit);
 
                 if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.QUEEN)) {
                     ourQueen = unit;
+                } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.QUEEN)) {
+                    theirQueen = unit;
+                } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.KNIGHT)) {
+                    enemyKnights.add(unit);
                 }
             }
 
             // Write an action using System.out.println()
             // To debug: System.err.println("Debug messages...");
 
-            buildBuildings(sites, ourQueen);
-            trainUnits(sitesReadyToTrain, ourQueen, gold);
+            buildBuildings(sites, ourQueen, theirQueen);
+            trainUnits(sitesReadyToTrain, ourQueen, gold, theirQueen, enemyKnights);
         }
     }
 
-    private static void buildBuildings(List<Site> sites, Unit finalOurQueen) {
-        Site closestEmptySite = sites.stream()
-                .filter(site -> site.getSiteStatus().getStructureType().equals(StructureType.NO_STRUCTURE))
+    private static void buildBuildings(List<Site> sites, Unit finalOurQueen, Unit theirQueen) {
+        int radiusToBuildBuilding = 63813;
+        Optional<Site> closestNonFriendlySite = sites.stream()
+                .filter(site -> radiusToBuildBuilding > Math.abs(finalOurQueen.getPosition().distanceSq(site.getPosition())))
+                .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
                 .min((site1, site2) -> {
                     double site1DistanseToQueen = finalOurQueen.getPosition().distanceSq(site1.getPosition());
                     double site2DistanseToQueen = finalOurQueen.getPosition().distanceSq(site2.getPosition());
                     return (int) (Math.abs(site1DistanseToQueen) - Math.abs(site2DistanseToQueen));
-                })
-                .get();
+                });
 
         // First line: A valid queen action
         // Second line: A set of training instructions
-        System.out.println("BUILD " + closestEmptySite.getSiteId() + " BARRACKS-" + typeToBuildNext);
+        if (closestNonFriendlySite.isPresent()) {
+            long knightSites = sites.stream().filter(site -> site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
+                    .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.KNIGHT))
+                    .count();
 
-        //Switch type to build:
-        if (typeToBuildNext == UnitType.KNIGHT) {
-            typeToBuildNext = UnitType.ARCHER;
-        } else if (typeToBuildNext == UnitType.ARCHER) {
-            typeToBuildNext = UnitType.KNIGHT;
+            long archerSites = sites.stream().filter(site -> site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
+                    .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.ARCHER))
+                    .count();
+
+            UnitType typeToBuildNext = knightSites > archerSites ? UnitType.ARCHER : UnitType.KNIGHT;
+
+            System.out.println("BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-" + typeToBuildNext);
+        } else {
+            System.out.println("MOVE " + ((int) theirQueen.getPosition().getX()) + " " + ((int) theirQueen.getPosition().getY()));
         }
     }
 
-    private static void trainUnits(List<Site> sitesReadyToTrain, Unit finalOurQueen, int gold) {
+    private static void trainUnits(List<Site> sitesReadyToTrain, Unit finalOurQueen, int gold, Unit theirQueen, List<Unit> enemyKnights) {
         List<Integer> goldUsed = new LinkedList<>();
 
-        String closestTrainableSite = sitesReadyToTrain.stream()
+        int radiusToSpawnKnights = 563813;
+        int radiusToSpawnArchers = 563813;
+        int radiusNotToSpawnFromEnemyQueen = 43813;
+
+        List<String> killerKnightSides = sitesReadyToTrain.stream()
+                .filter(site -> radiusNotToSpawnFromEnemyQueen < Math.abs(theirQueen.getPosition().distanceSq(site.getPosition())))
+                .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.KNIGHT))
+                .filter(site -> radiusToSpawnKnights > Math.abs(theirQueen.getPosition().distanceSq(site.getPosition())))
                 .sorted((site1, site2) -> {
-                    double site1DistanseToQueen = finalOurQueen.getPosition().distanceSq(site1.getPosition());
-                    double site2DistanseToQueen = finalOurQueen.getPosition().distanceSq(site2.getPosition());
+                    double site1DistanseToQueen = theirQueen.getPosition().distanceSq(site1.getPosition());
+                    double site2DistanseToQueen = theirQueen.getPosition().distanceSq(site2.getPosition());
                     return (int) (Math.abs(site1DistanseToQueen) - Math.abs(site2DistanseToQueen));
                 })
                 .filter(site -> {
@@ -107,8 +127,37 @@ class Player {
                 })
                 .map(Site::getSiteId)
                 .map(String::valueOf)
-                .collect(Collectors.joining(" ", "TRAIN ", ""));
+                .collect(Collectors.toList());
 
-        System.out.println(closestTrainableSite.trim());
+        List<String> defenceArcher = new LinkedList<>();
+        if (goldUsed.stream().reduce(0, Integer::sum) + (UnitType.ARCHER.costToTrain * 2) <= gold &&
+                !enemyKnights.isEmpty()) {
+            defenceArcher.addAll(sitesReadyToTrain.stream()
+                    .filter(site -> radiusNotToSpawnFromEnemyQueen < Math.abs(theirQueen.getPosition().distanceSq(site.getPosition())))
+                    .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.ARCHER))
+                    .filter(site -> radiusToSpawnArchers > Math.abs(finalOurQueen.getPosition().distanceSq(site.getPosition())))
+                    .sorted((site1, site2) -> {
+                        double site1DistanseToQueen = finalOurQueen.getPosition().distanceSq(site1.getPosition());
+                        double site2DistanseToQueen = finalOurQueen.getPosition().distanceSq(site2.getPosition());
+                        return (int) (Math.abs(site1DistanseToQueen) - Math.abs(site2DistanseToQueen));
+                    })
+                    .filter(site -> {
+                        int costToTrain = site.getSiteStatus().getUnitType().costToTrain;
+                        Integer sumOfGoldUsed = goldUsed.stream().reduce(0, Integer::sum);
+                        if (sumOfGoldUsed + costToTrain <= gold) {
+                            goldUsed.add(costToTrain);
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    })
+                    .map(Site::getSiteId)
+                    .map(String::valueOf)
+                    .collect(Collectors.toList()));
+        }
+
+        System.out.println(Stream.concat(killerKnightSides.stream(), defenceArcher.stream())
+                .collect(Collectors.joining(" ", "TRAIN ", ""))
+                .trim());
     }
 }
