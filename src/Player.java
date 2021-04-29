@@ -70,24 +70,33 @@ class Player {
     }
 
     private static void buildBuildings(List<Site> sites, Unit finalOurQueen, Unit theirQueen) {
+        String order = "MOVE " + ((int) theirQueen.getPosition().getX()) + " " + ((int) theirQueen.getPosition().getY());
+
         int radiusToBuildBuilding = 63813;
         Optional<Site> closestNonFriendlySite = sites.stream()
                 .filter(distanceIsBelow(finalOurQueen, radiusToBuildBuilding))
                 .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
                 .min(distanceTo(finalOurQueen.getPosition()));
 
-        if (closestNonFriendlySite.isPresent()) {
-            UnitType typeToBuildNext = sites.stream()
-                    .collect(Collectors.groupingBy(site -> site.getSiteStatus().getUnitType()))
-                    .entrySet().stream()
-                    .min(Comparator.comparingInt(entry -> entry.getValue().size()))
-                    .map(Map.Entry::getKey)
-                    .get();
 
-            System.out.println("BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-" + typeToBuildNext);
-        } else {
-            System.out.println("MOVE " + ((int) theirQueen.getPosition().getX()) + " " + ((int) theirQueen.getPosition().getY()));
+        if (closestNonFriendlySite.isPresent()) {
+            UnitType typeToBuildNext =
+                    Stream.concat(
+                            Arrays.stream(UnitType.values()).sequential()
+                                    .filter(ut -> !ut.equals(UnitType.QUEEN)),
+                            sites.stream()
+                                    .filter(site -> site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
+                                    .map(site -> site.getSiteStatus().getUnitType()))
+                            .collect(Collectors.groupingBy(ut -> ut))
+                            .entrySet().stream()
+                            .min(Comparator.comparingInt(entry -> entry.getValue().size()))
+                            .map(Map.Entry::getKey)
+                            .orElse(UnitType.ARCHER);
+
+            order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-" + typeToBuildNext;
         }
+
+        System.out.println(order);
     }
 
     private static void trainUnits(List<Site> sitesReadyToTrain, Unit finalOurQueen, int gold, Unit theirQueen, List<Unit> enemyKnights) {
