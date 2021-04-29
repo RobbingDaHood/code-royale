@@ -76,18 +76,13 @@ class Player {
                 .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
                 .min(distanceTo(finalOurQueen.getPosition()));
 
-        // First line: A valid queen action
-        // Second line: A set of training instructions
         if (closestNonFriendlySite.isPresent()) {
-            long knightSites = sites.stream()
-                    .filter(site -> site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
-                    .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.KNIGHT))
-                    .count();
-            long archerSites = sites.stream()
-                    .filter(site -> site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
-                    .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.ARCHER))
-                    .count();
-            UnitType typeToBuildNext = knightSites > archerSites ? UnitType.ARCHER : UnitType.KNIGHT;
+            UnitType typeToBuildNext = sites.stream()
+                    .collect(Collectors.groupingBy(site -> site.getSiteStatus().getUnitType()))
+                    .entrySet().stream()
+                    .min(Comparator.comparingInt(entry -> entry.getValue().size()))
+                    .map(Map.Entry::getKey)
+                    .get();
 
             System.out.println("BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-" + typeToBuildNext);
         } else {
