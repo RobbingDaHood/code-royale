@@ -13,9 +13,9 @@ class Player {
 
     private static int gameTurns = 0;
     private static int numUnits = 0;
-    private static List<Unit> units = new LinkedList<>();
     private static Unit ourQueen = null;
     private static Unit theirQueen = null;
+    private static List<Unit> units = new LinkedList<>();
     private static List<Unit> enemyKnights = new LinkedList<>();
     private static List<Unit> myGiants = new LinkedList<>();
     private static List<Unit> myArchers = new LinkedList<>();
@@ -37,7 +37,6 @@ class Player {
             sites.add(new Site(in.nextInt(), in.nextInt(), in.nextInt(), in.nextInt()));
         }
 
-
         // game loop
         while (true) {
             gold = in.nextInt();
@@ -46,8 +45,8 @@ class Player {
             updateSites(in);
             updateUnits(in);
 
-            buildBuildings();
-            trainUnitsDefence();
+            buildBuildingsOffence();
+            trainUnitsOffence();
 
             gameTurns++;
             System.err.println("gameTurns: " + gameTurns);
@@ -55,6 +54,11 @@ class Player {
     }
 
     private static void updateSites(Scanner in) {
+        sitesReadyToTrain = new LinkedList<>();
+        enemyTowers = new LinkedList<>();
+        myTowers = new LinkedList<>();
+        myArcherBarracks = new LinkedList<>();
+
         sites.forEach(site -> {
             site.getSiteStatus().setSiteId(in.nextInt());
             site.getSiteStatus().setIgnore1(in.nextInt());
@@ -84,13 +88,20 @@ class Player {
     }
 
     private static void updateUnits(Scanner in) {
+        units = new LinkedList<>();
+        enemyKnights = new LinkedList<>();
+        myGiants = new LinkedList<>();
+        myArchers = new LinkedList<>();
+
         numUnits = in.nextInt();
+        System.err.println("numUnits: " + numUnits);
         for (int i = 0; i < numUnits; i++) {
             Unit unit = new Unit(in.nextInt(), in.nextInt(), in.nextInt(), in.nextInt(), in.nextInt());
             units.add(unit);
 
             if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.QUEEN)) {
                 ourQueen = unit;
+                System.err.println("ourQueen: " + ourQueen);
             } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.QUEEN)) {
                 theirQueen = unit;
             } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.KNIGHT)) {
@@ -103,7 +114,7 @@ class Player {
         }
     }
 
-    private static void buildBuildings() {
+    private static void buildBuildingsDefence() {
         String order = "MOVE " + ((int) theirQueen.getPosition().getX()) + " " + ((int) theirQueen.getPosition().getY());
 
         if (ourQueen.health < theirQueen.health - 10 && !myTowers.isEmpty()) {
@@ -160,6 +171,44 @@ class Player {
         System.out.println(order);
     }
 
+    private static void buildBuildingsOffence() {
+        String order = "MOVE 0 0";
+
+        int sensitiveZoneAroundOurQueen = 563813;
+
+        System.err.println("ourQueen: " + ourQueen);
+        Optional<Site> closestNonFriendlySite = sites.stream()
+                .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
+                .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
+                .min(distanceTo(ourQueen.getPosition()));
+
+        if (closestNonFriendlySite.isPresent()) {
+            List<Site> ourBarracks = sites.stream()
+                    .filter(site -> site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
+                    .filter(site -> site.getSiteStatus().getStructureType().equals(StructureType.BARRACKS))
+                    .collect(Collectors.toList());
+            if (ourBarracks.size() > 3) {
+                long enemyKnigthsCloseToQueen = units.stream()
+                        .filter(distanceIsBelow(ourQueen, sensitiveZoneAroundOurQueen))
+                        .filter(unit -> unit.getOwner().equals(OwnerType.ENEMY))
+                        .filter(unit -> unit.getUnitType().equals(UnitType.KNIGHT))
+                        .count();
+
+                Optional<Site> closestFriendlyTower = myTowers.stream()
+                        .min(distanceTo(ourQueen.getPosition()));
+                if (enemyKnigthsCloseToQueen > 3 && closestFriendlyTower.isPresent()) {
+                    order = "BUILD " + closestFriendlyTower.get().getSiteId() + " TOWER";
+                } else {
+                    order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " TOWER";
+                }
+            } else {
+                order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-KNIGHT";
+            }
+        }
+
+        System.out.println(order);
+    }
+
     private static void trainUnitsDefence() {
         List<Integer> goldUsed = new LinkedList<>();
 
@@ -209,6 +258,33 @@ class Player {
                         .flatMap(i -> i)
                         .collect(Collectors.joining(" ", "TRAIN ", ""))
                         .trim());
+    }
+
+    private static void trainUnitsOffence() {
+        List<Integer> goldUsed = new LinkedList<>();
+
+        int radiusNotToSpawnFromEnemyQueen = 43813;
+
+        List<String> killerKnightSides = new LinkedList<>();
+        if (gold >= UnitType.KNIGHT.costToTrain * 2) {
+            killerKnightSides = sitesReadyToTrain.stream()
+                    .filter(distanceIsAbove(theirQueen, radiusNotToSpawnFromEnemyQueen))
+                    .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.KNIGHT))
+                    .filter(canPayForTraining(gold, goldUsed))
+                    .sorted(distanceTo(theirQueen.getPosition()))
+                    .map(Site::getSiteId)
+                    .map(String::valueOf)
+                    .collect(Collectors.toList());
+
+            if (killerKnightSides.size() < 2) {
+                killerKnightSides = new LinkedList<>();
+            }
+        }
+
+
+        System.out.println(killerKnightSides.stream()
+                .collect(Collectors.joining(" ", "TRAIN ", ""))
+                .trim());
     }
 
     private static Predicate<HasPosition> distanceIsBelow(Unit theirQueen, int radiusToSpawnKnights) {
