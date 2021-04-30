@@ -1,10 +1,10 @@
 public class SiteStatus {
     int siteId;
-    int ignore1; // used in future leagues
-    int ignore2; // used in future leagues
+    int gold; // used in future leagues
+    int maxMineSize; // used in future leagues
     StructureType structureType; // -1 = No structure, 2 = Barracks
     OwnerType owner; // -1 = No structure, 0 = Friendly, 1 = Enemy
-    int turnsBeforeTraining;
+    int param1;
     UnitType unitType;
 
     public int getSiteId() {
@@ -15,20 +15,20 @@ public class SiteStatus {
         this.siteId = siteId;
     }
 
-    public int getIgnore1() {
-        return ignore1;
+    public int getGold() {
+        return gold;
     }
 
-    public void setIgnore1(int ignore1) {
-        this.ignore1 = ignore1;
+    public void setGold(int gold) {
+        this.gold = gold;
     }
 
-    public int getIgnore2() {
-        return ignore2;
+    public int getMaxMineSize() {
+        return maxMineSize;
     }
 
-    public void setIgnore2(int ignore2) {
-        this.ignore2 = ignore2;
+    public void setMaxMineSize(int maxMineSize) {
+        this.maxMineSize = maxMineSize;
     }
 
     public StructureType getStructureType() {
@@ -55,12 +55,12 @@ public class SiteStatus {
         this.owner = owner;
     }
 
-    public int getTurnsBeforeTraining() {
-        return turnsBeforeTraining;
+    public int getParam1() {
+        return param1;
     }
 
-    public void setTurnsBeforeTraining(int turnsBeforeTraining) {
-        this.turnsBeforeTraining = turnsBeforeTraining;
+    public void setParam1(int param1) {
+        this.param1 = param1;
     }
 
     public UnitType getUnitType() {

@@ -1,5 +1,6 @@
 public enum StructureType {
     NO_STRUCTURE(-1),
+    MINE(0),
     TOWER(1),
     BARRACKS(2);
 
