@@ -11,11 +11,28 @@ import java.util.stream.Stream;
  **/
 class Player {
 
+    private static int gameTurns = 0;
+    private static int numUnits = 0;
+    private static List<Unit> units = new LinkedList<>();
+    private static Unit ourQueen = null;
+    private static Unit theirQueen = null;
+    private static List<Unit> enemyKnights = new LinkedList<>();
+    private static List<Unit> myGiants = new LinkedList<>();
+    private static List<Unit> myArchers = new LinkedList<>();
+
+    private static List<Site> sitesReadyToTrain = new LinkedList<>();
+    private static List<Site> enemyTowers = new LinkedList<>();
+    private static List<Site> myTowers = new LinkedList<>();
+    private static List<Site> myArcherBarracks = new LinkedList<>();
+    private static List<Site> sites = new LinkedList<>();
+
+    private static int gold = 0;
+
     public static void main(String args[]) {
         Scanner in = new Scanner(System.in);
         int numSites = in.nextInt();
 
-        List<Site> sites = new LinkedList<>();
+        sites = new LinkedList<>();
         for (int i = 0; i < numSites; i++) {
             sites.add(new Site(in.nextInt(), in.nextInt(), in.nextInt(), in.nextInt()));
         }
@@ -23,79 +40,77 @@ class Player {
 
         // game loop
         while (true) {
-            int gold = in.nextInt();
+            gold = in.nextInt();
             int touchedSite = in.nextInt(); // -1 if none
 
-            List<Site> sitesReadyToTrain = new LinkedList<>();
-            List<Site> enemyTowers = new LinkedList<>();
-            List<Site> myTowers = new LinkedList<>();
-            List<Site> myArcherBarracks = new LinkedList<>();
-            sites.forEach(site -> {
-                site.getSiteStatus().setSiteId(in.nextInt());
-                site.getSiteStatus().setIgnore1(in.nextInt());
-                site.getSiteStatus().setIgnore2(in.nextInt());
-                site.getSiteStatus().setStructureType(in.nextInt());
-                site.getSiteStatus().setOwner(in.nextInt());
-                site.getSiteStatus().setTurnsBeforeTraining(in.nextInt());
-                site.getSiteStatus().setUnitType(in.nextInt());
+            updateSites(in);
+            updateUnits(in);
 
-                if (site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) &&
-                        site.getSiteStatus().getStructureType().equals(StructureType.BARRACKS)) {
-                    if (site.getSiteStatus().getUnitType().equals(UnitType.ARCHER)) {
-                        myArcherBarracks.add(site);
-                    }
+            buildBuildings();
+            trainUnitsDefence();
 
-                    if (site.getSiteStatus().getTurnsBeforeTraining() == 0) {
-                        sitesReadyToTrain.add(site);
-                    }
-                } else if (site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
-                        site.getSiteStatus().getOwner().equals(OwnerType.ENEMY)) {
-                    enemyTowers.add(site);
-                } else if (site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
-                        site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
-                    myTowers.add(site);
-                }
-            });
-
-            int numUnits = in.nextInt();
-            List<Unit> units = new LinkedList<>();
-            Unit ourQueen = null;
-            Unit theirQueen = null;
-            List<Unit> enemyKnights = new LinkedList<>();
-            List<Unit> myGiants = new LinkedList<>();
-            List<Unit> myArchers = new LinkedList<>();
-            for (int i = 0; i < numUnits; i++) {
-                Unit unit = new Unit(in.nextInt(), in.nextInt(), in.nextInt(), in.nextInt(), in.nextInt());
-                units.add(unit);
-
-                if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.QUEEN)) {
-                    ourQueen = unit;
-                } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.QUEEN)) {
-                    theirQueen = unit;
-                } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.KNIGHT)) {
-                    enemyKnights.add(unit);
-                } else if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.GIANT)) {
-                    myGiants.add(unit);
-                } else if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.ARCHER)) {
-                    myArchers.add(unit);
-                }
-            }
-
-            buildBuildings(sites, ourQueen, theirQueen, enemyTowers, units, myArcherBarracks, myTowers);
-            trainUnits(sitesReadyToTrain, ourQueen, gold, theirQueen, enemyKnights, enemyTowers, myGiants, myArchers);
+            gameTurns++;
+            System.err.println("gameTurns: " + gameTurns);
         }
     }
 
-    private static void buildBuildings(List<Site> sites, Unit finalOurQueen, Unit theirQueen, List<Site> enemyTowers, List<Unit> units, List<Site> myArcherBarracks, List<Site> myTowers) {
+    private static void updateSites(Scanner in) {
+        sites.forEach(site -> {
+            site.getSiteStatus().setSiteId(in.nextInt());
+            site.getSiteStatus().setIgnore1(in.nextInt());
+            site.getSiteStatus().setIgnore2(in.nextInt());
+            site.getSiteStatus().setStructureType(in.nextInt());
+            site.getSiteStatus().setOwner(in.nextInt());
+            site.getSiteStatus().setTurnsBeforeTraining(in.nextInt());
+            site.getSiteStatus().setUnitType(in.nextInt());
+
+            if (site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) &&
+                    site.getSiteStatus().getStructureType().equals(StructureType.BARRACKS)) {
+                if (site.getSiteStatus().getUnitType().equals(UnitType.ARCHER)) {
+                    myArcherBarracks.add(site);
+                }
+
+                if (site.getSiteStatus().getTurnsBeforeTraining() == 0) {
+                    sitesReadyToTrain.add(site);
+                }
+            } else if (site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
+                    site.getSiteStatus().getOwner().equals(OwnerType.ENEMY)) {
+                enemyTowers.add(site);
+            } else if (site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
+                    site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
+                myTowers.add(site);
+            }
+        });
+    }
+
+    private static void updateUnits(Scanner in) {
+        numUnits = in.nextInt();
+        for (int i = 0; i < numUnits; i++) {
+            Unit unit = new Unit(in.nextInt(), in.nextInt(), in.nextInt(), in.nextInt(), in.nextInt());
+            units.add(unit);
+
+            if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.QUEEN)) {
+                ourQueen = unit;
+            } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.QUEEN)) {
+                theirQueen = unit;
+            } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.KNIGHT)) {
+                enemyKnights.add(unit);
+            } else if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.GIANT)) {
+                myGiants.add(unit);
+            } else if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.ARCHER)) {
+                myArchers.add(unit);
+            }
+        }
+    }
+
+    private static void buildBuildings() {
         String order = "MOVE " + ((int) theirQueen.getPosition().getX()) + " " + ((int) theirQueen.getPosition().getY());
 
-        if (finalOurQueen.health < theirQueen.health - 10 && !myTowers.isEmpty()) {
+        if (ourQueen.health < theirQueen.health - 10 && !myTowers.isEmpty()) {
             Optional<Site> closestFriendlyTower = myTowers.stream()
-                    .min(distanceTo(finalOurQueen.getPosition()));
+                    .min(distanceTo(ourQueen.getPosition()));
             order = "BUILD " + closestFriendlyTower.get().getSiteId() + " TOWER";
         } else {
-
-
             int sensitiveZoneAroundOurQueen = 563813;
             int radiusToBuildBuilding = 63813;
             if (!enemyTowers.isEmpty()) {
@@ -104,14 +119,14 @@ class Player {
 
 
             Optional<Site> closestNonFriendlySite = sites.stream()
-                    .filter(distanceIsBelow(finalOurQueen, radiusToBuildBuilding))
+                    .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
                     .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
                     .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
-                    .min(distanceTo(finalOurQueen.getPosition()));
+                    .min(distanceTo(ourQueen.getPosition()));
 
             if (closestNonFriendlySite.isPresent()) {
                 long enemyKnigthsCloseToQueen = units.stream()
-                        .filter(distanceIsBelow(finalOurQueen, sensitiveZoneAroundOurQueen))
+                        .filter(distanceIsBelow(ourQueen, sensitiveZoneAroundOurQueen))
                         .filter(unit -> unit.getOwner().equals(OwnerType.ENEMY))
                         .filter(unit -> unit.getUnitType().equals(UnitType.KNIGHT))
                         .count();
@@ -145,7 +160,7 @@ class Player {
         System.out.println(order);
     }
 
-    private static void trainUnits(List<Site> sitesReadyToTrain, Unit finalOurQueen, int gold, Unit theirQueen, List<Unit> enemyKnights, List<Site> enemyTowers, List<Unit> myGiants, List<Unit> myArchers) {
+    private static void trainUnitsDefence() {
         List<Integer> goldUsed = new LinkedList<>();
 
         int radiusToSpawnKnights = 563813;
@@ -170,9 +185,9 @@ class Player {
             defenceArcher = sitesReadyToTrain.stream()
                     .filter(distanceIsAbove(theirQueen, radiusNotToSpawnFromEnemyQueen))
                     .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.ARCHER))
-                    .filter(distanceIsBelow(finalOurQueen, radiusToSpawnArchers))
+                    .filter(distanceIsBelow(ourQueen, radiusToSpawnArchers))
                     .filter(canPayForTraining(gold, goldUsed))
-                    .sorted(distanceTo(finalOurQueen.getPosition()))
+                    .sorted(distanceTo(ourQueen.getPosition()))
                     .map(Site::getSiteId)
                     .map(String::valueOf)
                     .collect(Collectors.toList());
