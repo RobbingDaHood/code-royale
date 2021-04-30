@@ -16,4 +16,4 @@ rm -rf "$out_file"
 find "$src_path" ! -path '*/test/*' -type f -name "*.$file_type" -exec grep -E 'import' {} \; | sort | uniq > "$out_file"
 
 # copy everything else excluding package and import statements
-find "$src_path" ! -path '*/test/*' -type f -name "*.$file_type" -exec grep -Ev 'package|import' {} \; | sed -e 's/^public class/class/' | sed -e 's/^public enum/enum/' >> "$out_file"
+find "$src_path" ! -path '*/test/*' -type f -name "*.$file_type" -exec grep -Ev 'package|import' {} \; | sed -e 's/^public class/class/' | sed -e 's/^public enum/enum/' | sed -e 's/^public interface/interface/' >> "$out_file"

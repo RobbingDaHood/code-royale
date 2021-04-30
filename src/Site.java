@@ -1,6 +1,6 @@
 import java.awt.*;
 
-public class Site {
+public class Site implements HasPosition {
     int siteId;
     Point position;
     int radius;

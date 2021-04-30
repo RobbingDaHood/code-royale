@@ -1,6 +1,6 @@
 import java.awt.*;
 
-public class Unit {
+public class Unit implements HasPosition {
     Point position;
     OwnerType owner;
     UnitType unitType;
