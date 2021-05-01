@@ -152,9 +152,17 @@ class Player {
     private static void buildBuildingsOffence() {
         String order = "MOVE " + ((int) theirQueen.getPosition().getX()) + " " + ((int) theirQueen.getPosition().getY());
 
-//        units.stream()
-//                .filter()
+        List<Unit> threadeningKnights = units.stream()
+                .filter(unit -> unit.owner.equals(OwnerType.ENEMY))
+                .filter(unit -> unit.unitType.equals(UnitType.KNIGHT))
+                .filter(unit -> distanceIsBelow(ourQueen, unit.getThreadArea(), unit.getPosition()))
+                .collect(Collectors.toList());
 
+//        if (threadeningKnights.size() > 0) { //Run away and change everything to towers
+//
+//            List<Unit> threadeningKnights = units.stream()
+//                    .map(unit -> unit.position.)
+//        }
 
 
         if (gold > 120 && myGiantBarracks.size() < 1) {
@@ -256,7 +264,11 @@ class Player {
     }
 
     private static Predicate<HasPosition> distanceIsBelow(Unit theirQueen, int radiusToSpawnKnights) {
-        return site -> radiusToSpawnKnights > Math.abs(theirQueen.getPosition().distance(site.getPosition()));
+        return site -> distanceIsBelow(theirQueen, radiusToSpawnKnights, site.getPosition());
+    }
+
+    private static boolean distanceIsBelow(Unit theirQueen, int radiusToSpawnKnights, Point point) {
+        return radiusToSpawnKnights > Math.abs(theirQueen.getPosition().distance(point));
     }
 
     private static Predicate<HasPosition> distanceIsAbove(Unit theirQueen, int radiusNotToSpawnFromEnemyQueen) {

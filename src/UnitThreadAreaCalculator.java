@@ -5,7 +5,7 @@ public class UnitThreadAreaCalculator {
             case ARCHER:
                 return 25;
             case KNIGHT:
-                return unit.owner.equals(OwnerType.ENEMY) ? 120 : 20;
+                return unit.owner.equals(OwnerType.ENEMY) ? 20 + 100 * 3 : 20;
             case GIANT:
                 return 40;
             case QUEEN:

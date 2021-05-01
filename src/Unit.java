@@ -31,4 +31,8 @@ public class Unit implements HasPosition {
     public int getHealth() {
         return health;
     }
+
+    public int getThreadArea() {
+        return threadArea;
+    }
 }
