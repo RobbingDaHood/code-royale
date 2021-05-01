@@ -152,8 +152,13 @@ class Player {
     private static void buildBuildingsOffence() {
         String order = "MOVE " + ((int) theirQueen.getPosition().getX()) + " " + ((int) theirQueen.getPosition().getY());
 
+//        units.stream()
+//                .filter()
+
+
+
         if (gold > 120 && myGiantBarracks.size() < 1) {
-            int radiusToBuildBuilding = 163813;
+            int radiusToBuildBuilding = 500;
 
             Optional<Site> closestNonFriendlySite = sites.stream()
                     .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
@@ -164,8 +169,8 @@ class Player {
                 order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-GIANT";
             }
         } else if (myKnightBarracks.size() < 1) {
-            int radiusToBuildBuilding = 103813;
-            int radiusToBuildBuildingCloseToEnemyQueen = 963813;
+            int radiusToBuildBuilding = 300;
+            int radiusToBuildBuildingCloseToEnemyQueen = 100;
 
             Optional<Site> closestNonFriendlySite = sites.stream()
                     .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
@@ -190,7 +195,7 @@ class Player {
                 }
             }
         } else {
-            int radiusToBuildBuilding = 103813;
+            int radiusToBuildBuilding = 500;
 
             order = sites.stream()
                     .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
@@ -216,7 +221,7 @@ class Player {
     private static void trainUnitsOffence() {
         List<Integer> goldUsed = new LinkedList<>();
 
-        int radiusNotToSpawnFromEnemyQueen = 43813;
+        int radiusNotToSpawnFromEnemyQueen = 100;
 
         Stream<String> giantSites = Stream.empty();
         if (myGiants.size() < enemyTowers.size() / 2) {
@@ -251,11 +256,11 @@ class Player {
     }
 
     private static Predicate<HasPosition> distanceIsBelow(Unit theirQueen, int radiusToSpawnKnights) {
-        return site -> radiusToSpawnKnights > Math.abs(theirQueen.getPosition().distanceSq(site.getPosition()));
+        return site -> radiusToSpawnKnights > Math.abs(theirQueen.getPosition().distance(site.getPosition()));
     }
 
     private static Predicate<HasPosition> distanceIsAbove(Unit theirQueen, int radiusNotToSpawnFromEnemyQueen) {
-        return site -> radiusNotToSpawnFromEnemyQueen < Math.abs(theirQueen.getPosition().distanceSq(site.getPosition()));
+        return site -> radiusNotToSpawnFromEnemyQueen < Math.abs(theirQueen.getPosition().distance(site.getPosition()));
     }
 
     private static Predicate<Site> canPayForTraining(int gold, List<Integer> goldUsed) {
