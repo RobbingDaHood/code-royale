@@ -170,7 +170,7 @@ class Player {
             }
         } else if (myKnightBarracks.size() < 1) {
             int radiusToBuildBuilding = 300;
-            int radiusToBuildBuildingCloseToEnemyQueen = 100;
+            int radiusToBuildBuildingCloseToEnemyQueen = 1000;
 
             Optional<Site> closestNonFriendlySite = sites.stream()
                     .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
