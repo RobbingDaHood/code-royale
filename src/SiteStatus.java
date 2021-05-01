@@ -1,4 +1,5 @@
 public class SiteStatus {
+    Site site;
     int siteId;
     int gold; // used in future leagues
     int maxMineSize; // used in future leagues
@@ -6,6 +7,18 @@ public class SiteStatus {
     OwnerType owner; // -1 = No structure, 0 = Friendly, 1 = Enemy
     int param1;
     UnitType unitType;
+    int towerRange;
+
+    int threadArea = 0;
+    int goalArea = 0;
+
+    public Site getSite() {
+        return site;
+    }
+
+    public void setSite(Site site) {
+        this.site = site;
+    }
 
     public int getSiteId() {
         return siteId;
@@ -67,11 +80,28 @@ public class SiteStatus {
         return unitType;
     }
 
-    public void setUnitType(int unitType) {
-        this.unitType = UnitType.getType(unitType);
+    public int getTowerRange() {
+        return towerRange;
     }
 
-    public void setUnitType(UnitType setUnitType) {
-        this.unitType = setUnitType;
+    public void setUnitTypeOrTowerRange(int unitType) {
+        if (structureType.equals(StructureType.BARRACKS)) {
+            this.unitType = UnitType.getType(unitType);
+        } else if (structureType.equals(StructureType.TOWER)) {
+            towerRange = unitType;
+        }
+    }
+
+    public int getThreadArea() {
+        return threadArea;
+    }
+
+    public int getGoalArea() {
+        return goalArea;
+    }
+
+    public void calculateAreas() {
+        threadArea = SiteThreadAreaCalculator.threadArea(getSite());
+        goalArea = SiteGoalAreaCalculator.threadArea(getSite());
     }
 }

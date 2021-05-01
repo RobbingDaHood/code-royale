@@ -3,6 +3,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Auto-generated code below aims at helping you parse
@@ -18,15 +19,19 @@ class Player {
     private static List<Unit> enemyKnights = new LinkedList<>();
     private static List<Unit> myGiants = new LinkedList<>();
     private static List<Unit> myArchers = new LinkedList<>();
+    private static List<Unit> enemyArchers = new LinkedList<>();
 
     private static List<Site> sitesReadyToTrain = new LinkedList<>();
     private static List<Site> enemyTowers = new LinkedList<>();
     private static List<Site> myTowers = new LinkedList<>();
+    private static List<Site> myMines = new LinkedList<>();
     private static List<Site> myArcherBarracks = new LinkedList<>();
     private static List<Site> myKnightBarracks = new LinkedList<>();
+    private static List<Site> myGiantBarracks = new LinkedList<>();
     private static List<Site> sites = new LinkedList<>();
 
     private static int gold = 0;
+    private static int goldIncome = 0;
 
     private static Boolean iAmBlue = null;
 
@@ -47,6 +52,12 @@ class Player {
             updateSites(in);
             updateUnits(in);
 
+            //Handle many towers (Build some giants?)
+            //Handle many knights (Build some towers?)
+            //Handle many archers (Wait with building units?)
+            //Else build many mines and spam knights
+            //Maybe queen movement is still the same.
+
             buildBuildingsOffence();
             trainUnitsOffence();
 
@@ -61,15 +72,18 @@ class Player {
         myTowers = new LinkedList<>();
         myArcherBarracks = new LinkedList<>();
         myKnightBarracks = new LinkedList<>();
+        myGiantBarracks = new LinkedList<>();
+        goldIncome = 0;
 
         sites.forEach(site -> {
+            site.getSiteStatus().setSite(site);
             site.getSiteStatus().setSiteId(in.nextInt());
             site.getSiteStatus().setGold(in.nextInt());
             site.getSiteStatus().setMaxMineSize(in.nextInt());
             site.getSiteStatus().setStructureType(in.nextInt());
             site.getSiteStatus().setOwner(in.nextInt());
             site.getSiteStatus().setParam1(in.nextInt());
-            site.getSiteStatus().setUnitType(in.nextInt());
+            site.getSiteStatus().setUnitTypeOrTowerRange(in.nextInt());
 
             if (site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) &&
                     site.getSiteStatus().getStructureType().equals(StructureType.BARRACKS)) {
@@ -77,6 +91,8 @@ class Player {
                     myArcherBarracks.add(site);
                 } else if (site.getSiteStatus().getUnitType().equals(UnitType.KNIGHT)) {
                     myKnightBarracks.add(site);
+                } else if (site.getSiteStatus().getUnitType().equals(UnitType.GIANT)) {
+                    myGiantBarracks.add(site);
                 }
 
                 if (site.getSiteStatus().getParam1() == 0) {
@@ -88,6 +104,10 @@ class Player {
             } else if (site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
                     site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
                 myTowers.add(site);
+            }else if (site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
+                    site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
+                myMines.add(site);
+                goldIncome += site.getSiteStatus().getParam1();
             }
         });
     }
@@ -97,6 +117,7 @@ class Player {
         enemyKnights = new LinkedList<>();
         myGiants = new LinkedList<>();
         myArchers = new LinkedList<>();
+        enemyArchers = new LinkedList<>();
 
         numUnits = in.nextInt();
         System.err.println("numUnits: " + numUnits);
@@ -118,6 +139,8 @@ class Player {
                 theirQueen = unit;
             } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.KNIGHT)) {
                 enemyKnights.add(unit);
+            } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.ARCHER)) {
+                enemyArchers.add(unit);
             } else if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.GIANT)) {
                 myGiants.add(unit);
             } else if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.ARCHER)) {
@@ -129,49 +152,62 @@ class Player {
     private static void buildBuildingsOffence() {
         String order = "MOVE " + ((int) theirQueen.getPosition().getX()) + " " + ((int) theirQueen.getPosition().getY());
 
-        if (myKnightBarracks.size() < 1) {
+        if (gold > 120 && myGiantBarracks.size() < 1) {
             int radiusToBuildBuilding = 163813;
+
+            Optional<Site> closestNonFriendlySite = sites.stream()
+                    .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
+                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
+                    .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
+                    .min(distanceTo(ourQueen.getPosition()));
+            if (closestNonFriendlySite.isPresent()) {
+                order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-GIANT";
+            }
+        } else if (myKnightBarracks.size() < 1) {
+            int radiusToBuildBuilding = 103813;
             int radiusToBuildBuildingCloseToEnemyQueen = 963813;
 
             Optional<Site> closestNonFriendlySite = sites.stream()
                     .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
-                    .filter(distanceIsBelow(theirQueen, radiusToBuildBuildingCloseToEnemyQueen))
                     .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
                     .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
                     .min(distanceTo(ourQueen.getPosition()));
 
-            if (closestNonFriendlySite.isPresent()) {
+            if (closestNonFriendlySite.isPresent() && distanceIsBelow(theirQueen, radiusToBuildBuildingCloseToEnemyQueen).test(closestNonFriendlySite.get())) {
                 order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-KNIGHT";
             } else {
-                Optional<Site> mineLocation = sites.stream()
+                closestNonFriendlySite = sites.stream()
                         .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
-                        .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
+                        .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) ||
+                                (site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) &&
+                                        site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
+                                        site.getSiteStatus().getMaxMineSize() > site.getSiteStatus().getParam1())
+                        )
                         .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
                         .min(distanceTo(ourQueen.getPosition()));
-                if (mineLocation.isPresent()) {
-                    order = "BUILD " + mineLocation.get().getSiteId() + " MINE";
+                if (closestNonFriendlySite.isPresent()) {
+                    order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " MINE";
                 }
             }
         } else {
             int radiusToBuildBuilding = 103813;
 
-            Optional<Site> closestNonFriendlySite = sites.stream()
+            order = sites.stream()
                     .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
-                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) ||
-                            (site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) &&
-                                    site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
-                                    site.getSiteStatus().getMaxMineSize() > site.getSiteStatus().getParam1())
-                    )
+                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
                     .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
-                    .min(distanceTo(ourQueen.getPosition()));
-
-            if (closestNonFriendlySite.isPresent()) {
-                order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " MINE";
-            } else if (iAmBlue) {
-                order = "MOVE 1920 0";
-            } else {
-                order = "MOVE 0 1000";
-            }
+                    .min(distanceTo(ourQueen.getPosition()))
+                    .map(site -> "BUILD " + site.getSiteId() + " TOWER")
+                    .orElseGet(() ->
+                            myTowers.stream()
+                                    .filter(site -> site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
+                                    .filter(site -> site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
+                                    .min(distanceTo(iAmBlue ? new Point(1920, 0) : new Point(0, 1000)))
+                                    .map(site -> "BUILD " + site.getSiteId() + " TOWER")
+                                    .orElseGet(() ->
+                                            iAmBlue ? "MOVE 1920 0" : "MOVE 0 1000"
+                                    )
+                    );
         }
 
         System.out.println(order);
@@ -182,15 +218,36 @@ class Player {
 
         int radiusNotToSpawnFromEnemyQueen = 43813;
 
-        System.out.println(sitesReadyToTrain.stream()
-                .filter(distanceIsAbove(theirQueen, radiusNotToSpawnFromEnemyQueen))
-                .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.KNIGHT))
-                .filter(canPayForTraining(gold, goldUsed))
-                .sorted(distanceTo(theirQueen.getPosition()))
-                .map(Site::getSiteId)
-                .map(String::valueOf)
-                .collect(Collectors.joining(" ", "TRAIN ", ""))
-                .trim());
+        Stream<String> giantSites = Stream.empty();
+        if (myGiants.size() < enemyTowers.size() / 2) {
+            giantSites = sitesReadyToTrain.stream()
+                    .filter(distanceIsAbove(theirQueen, radiusNotToSpawnFromEnemyQueen))
+                    .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.GIANT))
+                    .filter(canPayForTraining(gold, goldUsed))
+                    .sorted(distanceTo(theirQueen.getPosition()))
+                    .map(Site::getSiteId)
+                    .map(String::valueOf);
+            System.err.println("giantSites: ");
+        }
+
+        System.err.println("enemyTowers.size(): " + enemyTowers.size());
+        Stream<String> knightSites = Stream.empty();
+        if (enemyArchers.size() < 6 && (enemyTowers.size() == 0 || myGiants.size() >= enemyTowers.size() / 2)) {
+            knightSites = sitesReadyToTrain.stream()
+                    .filter(distanceIsAbove(theirQueen, radiusNotToSpawnFromEnemyQueen))
+                    .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.KNIGHT))
+                    .filter(canPayForTraining(gold, goldUsed))
+                    .sorted(distanceTo(theirQueen.getPosition()))
+                    .map(Site::getSiteId)
+                    .map(String::valueOf);
+            System.err.println("knightSites: ");
+        }
+
+        System.out.println(
+                Stream.of(knightSites, giantSites)
+                        .flatMap(i -> i)
+                        .collect(Collectors.joining(" ", "TRAIN ", ""))
+                        .trim());
     }
 
     private static Predicate<HasPosition> distanceIsBelow(Unit theirQueen, int radiusToSpawnKnights) {
