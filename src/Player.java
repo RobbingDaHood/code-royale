@@ -35,6 +35,8 @@ class Player {
     private static Boolean iAmBlue = null;
     private static NavMeshIsh2D navMeshIsh2D = null;
 
+    private static int granularity = 100;
+
     public static void main(String args[]) {
         Scanner in = new Scanner(System.in);
         int numSites = in.nextInt();
@@ -52,7 +54,7 @@ class Player {
 
             updateSites(in);
             updateUnits(in);
-            navMeshIsh2D.printPosition(getZoneCoordinate(ourQueen.position), 5);
+            navMeshIsh2D.printPosition(getZoneCoordinate(ourQueen.position), 2);
 
             //Handle many towers (Build some giants?)
             //Handle many knights (Build some towers?)
@@ -69,11 +71,11 @@ class Player {
     }
 
     private static int getZoneCoordinate(int mapCoordinate) {
-        return mapCoordinate / 50;
+        return mapCoordinate / granularity;
     }
 
     private static int getMapCoordinate(int zoneCoordine) {
-        return zoneCoordine * 50;
+        return zoneCoordine * granularity;
     }
 
     private static Point getZoneCoordinate(Point mapCoordinate) {
@@ -197,61 +199,63 @@ class Player {
 
 
         String order = "MOVE " + moveToThisPoint.x + " " + moveToThisPoint.y;
-        int radiusToBuildBuilding = 200;
+        int radiusToBuildBuilding = 300;
 
-        if (gold > 120 && myGiantBarracks.size() < 1) {
+        if (navMeshIsh2D.costMap[getZoneCoordinate(ourQueen.position.x)][getZoneCoordinate(ourQueen.position.y)] > 5000) {
             Optional<Site> closestNonFriendlySite = sites.stream()
                     .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
-                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
                     .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
-                    .min(distanceTo(ourQueen.getPosition()));
-            if (closestNonFriendlySite.isPresent()) {
-                order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-GIANT";
-            }
-        } else if (navMeshIsh2D.costMap[getZoneCoordinate(ourQueen.position.x)][getZoneCoordinate(ourQueen.position.y)] > 5000) {
-            Optional<Site> closestNonFriendlySite = sites.stream()
-                    .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
-                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
-                    .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
-                    .min(distanceTo(ourQueen.getPosition()));
+                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) ||
+                            !site.getSiteStatus().getStructureType().equals(StructureType.BARRACKS) ||
+                            site.getSiteStatus().getParam1() != 0)
+                    .min(distanceTo(moveToThisPoint));
 
             if (closestNonFriendlySite.isPresent()) {
                 order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " TOWER";
+            }
+        } else if (myGiantBarracks.size() < 1 && !enemyTowers.isEmpty()) {
+            Optional<Site> closestNonFriendlySite = sites.stream()
+                    .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
+                    .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
+                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) ||
+                            !site.getSiteStatus().getStructureType().equals(StructureType.BARRACKS))
+                    .min(distanceTo(moveToThisPoint));
+            if (closestNonFriendlySite.isPresent()) {
+                order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-GIANT";
             }
         } else if (myKnightBarracks.size() < 1 && !hasLowGoldIncome) {
             int radiusToBuildBuildingCloseToEnemyQueen = 1000;
 
             Optional<Site> closestNonFriendlySite = sites.stream()
                     .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
-                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
                     .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
-                    .min(distanceTo(ourQueen.getPosition()));
+                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) ||
+                            !site.getSiteStatus().getStructureType().equals(StructureType.BARRACKS))
+                    .min(distanceTo(moveToThisPoint));
 
             if (closestNonFriendlySite.isPresent() && distanceIsBelow(theirQueen, radiusToBuildBuildingCloseToEnemyQueen).test(closestNonFriendlySite.get())) {
                 order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-KNIGHT";
             }
         } else {
-            order = buildMine(order, radiusToBuildBuilding);
+            Optional<Site> closestNonFriendlySite = sites.stream()
+                    .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
+                    .filter(site -> !(site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
+                            site.getSiteStatus().getOwner().equals(OwnerType.ENEMY)))
+                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) ||
+                            (site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) &&
+                                    site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
+                                    site.getSiteStatus().getMaxMineSize() > site.getSiteStatus().getParam1()) ||
+                            (site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) &&
+                                    site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
+                    )
+                    .min(distanceTo(moveToThisPoint));
+
+            if (closestNonFriendlySite.isPresent()) {
+                order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " MINE";
+            }
         }
 
         System.out.println(order);
-    }
-
-    private static String buildMine(String order, int radiusToBuildBuilding) {
-        Optional<Site> closestNonFriendlySite = sites.stream()
-                .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
-                .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) ||
-                        (site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) &&
-                                site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
-                                site.getSiteStatus().getMaxMineSize() > site.getSiteStatus().getParam1())
-                )
-                .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
-                .min(distanceTo(ourQueen.getPosition()));
-
-        if (closestNonFriendlySite.isPresent()) {
-            order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " MINE";
-        }
-        return order;
     }
 
     private static void trainUnitsOffence() {
