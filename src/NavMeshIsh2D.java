@@ -16,7 +16,7 @@ public class NavMeshIsh2D {
     }
 
     public Point getBestNeighbour(Point currentPosition, int costWeight, int benefitWeight) {
-        Point result = null;
+        Point result = currentPosition;
 
         int currentY = currentPosition.y - 1;
         if (currentY >= 0) {
@@ -52,12 +52,8 @@ public class NavMeshIsh2D {
 
     private Point getBestCandidate(int costWeight, int benefitWeight, Point result, int currentY, int currentX) {
         Point candidate = new Point(currentX, currentY);
-        if (result == null) {
+        if (getCostBenefit(result, costWeight, benefitWeight) < getCostBenefit(candidate, costWeight, benefitWeight)) {
             result = candidate;
-        } else {
-            if (getCostBenefit(result, costWeight, benefitWeight) < getCostBenefit(candidate, costWeight, benefitWeight)) {
-                result = candidate;
-            }
         }
         return result;
     }
