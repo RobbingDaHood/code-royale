@@ -128,8 +128,8 @@ public class NavMeshIsh2D {
     }
 
     public void printMaps() {
-        for (int x = 0; x < heightInZone; x++) {
-            for (int y = 0; y < widthInZones; y++) {
+        for (int y = 0; y < widthInZones; y++) {
+            for (int x = 0; x < heightInZone; x++) {
                 System.err.print("[" + x + ":" + y + "," + costMap[x][y] + "," + benefitMap[x][y] + "]");
             }
             System.err.println();
@@ -137,10 +137,10 @@ public class NavMeshIsh2D {
     }
 
     public void printPosition(Point currentPosition, int range) {
-        for (int x = currentPosition.x - range; x <= currentPosition.x + range; x++) {
-            if (x < heightInZone && x >= 0) {
-                for (int y = currentPosition.y - range; y <= currentPosition.y + range; y++) {
-                    if (y < widthInZones && y >= 0) {
+        for (int y = currentPosition.y - range; y <= currentPosition.y + range; y++) {
+            if (y < widthInZones && y >= 0) {
+                for (int x = currentPosition.x - range; x <= currentPosition.x + range; x++) {
+                    if (x < heightInZone && x >= 0) {
                         System.err.print("[" + x + ":" + y + "," + costMap[x][y] + "," + benefitMap[x][y] + "]");
                     }
                 }

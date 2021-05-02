@@ -11,6 +11,8 @@ import java.util.stream.Stream;
  **/
 class Player {
 
+    private static final int mapHeight = 1000;
+    private static final int mapWidth = 1920;
     private static int gameTurns = 0;
     private static int numUnits = 0;
     private static Unit ourQueen = null;
@@ -20,7 +22,6 @@ class Player {
     private static List<Unit> myGiants = new LinkedList<>();
     private static List<Unit> myArchers = new LinkedList<>();
     private static List<Unit> enemyArchers = new LinkedList<>();
-
     private static List<Site> sitesReadyToTrain = new LinkedList<>();
     private static List<Site> enemyTowers = new LinkedList<>();
     private static List<Site> myTowers = new LinkedList<>();
@@ -29,16 +30,10 @@ class Player {
     private static List<Site> myKnightBarracks = new LinkedList<>();
     private static List<Site> myGiantBarracks = new LinkedList<>();
     private static List<Site> sites = new LinkedList<>();
-
     private static int gold = 0;
     private static int goldIncome = 0;
-
     private static Boolean iAmBlue = null;
-
     private static NavMeshIsh2D navMeshIsh2D = null;
-
-    private static final int mapHeight = 1000;
-    private static final int mapWidth = 1920;
 
     public static void main(String args[]) {
         Scanner in = new Scanner(System.in);
@@ -51,14 +46,13 @@ class Player {
 
         // game loop
         while (true) {
-            navMeshIsh2D = new NavMeshIsh2D(getZoneCoordinate(mapHeight), getZoneCoordinate(mapWidth));
+            navMeshIsh2D = new NavMeshIsh2D(getZoneCoordinate(mapWidth) + 1, getZoneCoordinate(mapHeight) + 1);
             gold = in.nextInt();
             int touchedSite = in.nextInt(); // -1 if none
 
             updateSites(in);
             updateUnits(in);
-
-            navMeshIsh2D.printMaps();
+            navMeshIsh2D.printPosition(getZoneCoordinate(ourQueen.position), 5);
 
             //Handle many towers (Build some giants?)
             //Handle many knights (Build some towers?)
@@ -75,11 +69,11 @@ class Player {
     }
 
     private static int getZoneCoordinate(int mapCoordinate) {
-        return mapCoordinate / 10;
+        return mapCoordinate / 50;
     }
 
     private static int getMapCoordinate(int zoneCoordine) {
-        return zoneCoordine * 10;
+        return zoneCoordine * 50;
     }
 
     private static Point getZoneCoordinate(Point mapCoordinate) {
@@ -127,13 +121,22 @@ class Player {
             } else if (site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
                     site.getSiteStatus().getOwner().equals(OwnerType.ENEMY)) {
                 enemyTowers.add(site);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 500, 10, getZoneCoordinate(site.getSiteStatus().getTowerRange()), true);
             } else if (site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
                     site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
                 myTowers.add(site);
-            }else if (site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 9999, 0, getZoneCoordinate(site.getRadius()), true);
+            } else if (site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
                     site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
                 myMines.add(site);
                 goldIncome += site.getSiteStatus().getParam1();
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 9999, 0, getZoneCoordinate(site.getRadius()), true);
+            } else if (!site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
+//                System.err.println("site.position: " + site.position);
+//                System.err.println("getZoneCoordinate(site.position): " + getZoneCoordinate(site.position));
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 500, 10, getZoneCoordinate(mapWidth*2), false);
+            } else {
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 9999, 0, getZoneCoordinate(site.getRadius()), true);
             }
         });
     }
