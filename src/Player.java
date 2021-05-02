@@ -156,7 +156,7 @@ class Player {
 
             if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.QUEEN)) {
                 ourQueen = unit;
-                System.err.println("ourQueen: " + ourQueen);
+                System.err.println("ourQueen: " + getZoneCoordinate(ourQueen.position));
 
                 if (iAmBlue == null) {
                     double distanceFromTopLeft = Math.abs(ourQueen.position.distance(0, 0));
@@ -168,6 +168,7 @@ class Player {
                 theirQueen = unit;
             } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.KNIGHT)) {
                 enemyKnights.add(unit);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(unit.position), 500, 100, getZoneCoordinate(9999), true);
             } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.ARCHER)) {
                 enemyArchers.add(unit);
             } else if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.GIANT)) {
