@@ -13,12 +13,59 @@ public class NavMeshIsh2D {
         this.widthInZones = widthInZones;
     }
 
-    public void insertGradiantValue(Point startingPoint, int cost, int costDecreasePrZone, boolean isCost) {
-        if (isCost) {
-            costMap[startingPoint.x][startingPoint.y] = cost;
-        } else {
-            benefitMap[startingPoint.x][startingPoint.y] = cost;
+    public Point getBestNeighbour(Point currentPosition, int costWeight, int benefitWeight) {
+        Point result = null;
+
+        int currentY = currentPosition.y - 1;
+        if (currentY >= 0) {
+            for (int currentX = currentPosition.x - 1; currentX <= currentPosition.x + 1; currentX++) {
+                if (currentX >= 0 && currentX < heightInZone) {
+                    result = getBestCandidate(costWeight, benefitWeight, result, currentY, currentX);
+                }
+            }
         }
+
+        currentY = currentPosition.y + 1;
+        if (currentY < widthInZones) {
+            for (int currentX = currentPosition.x - 1; currentX <= currentPosition.x + 1; currentX++) {
+                if (currentX >= 0 && currentX < heightInZone) {
+                    result = getBestCandidate(costWeight, benefitWeight, result, currentY, currentX);
+                }
+            }
+        }
+
+        int currentX = currentPosition.x + 1;
+        currentY = currentPosition.y;
+        if (currentX < heightInZone) {
+            result = getBestCandidate(costWeight, benefitWeight, result, currentY, currentX);
+        }
+
+        currentX = currentPosition.x - 1;
+        if (currentX >= 0) {
+            result = getBestCandidate(costWeight, benefitWeight, result, currentY, currentX);
+        }
+
+        return result;
+    }
+
+    private Point getBestCandidate(int costWeight, int benefitWeight, Point result, int currentY, int currentX) {
+        Point candidate = new Point(currentX, currentY);
+        if (result == null) {
+            result = candidate;
+        } else {
+            if (getCostBenefit(result, costWeight, benefitWeight) < getCostBenefit(candidate, costWeight, benefitWeight)) {
+                result = candidate;
+            }
+        }
+        return result;
+    }
+
+    public int getCostBenefit(Point position, int costWeight, int benefitWeight) {
+        return benefitMap[position.x][position.y] * benefitWeight - costMap[position.x][position.y] * costWeight;
+    }
+
+    public void insertGradiantValue(Point startingPoint, int cost, int costDecreasePrZone, boolean isCost) {
+        updateValues(cost, startingPoint.y, startingPoint.x, isCost);
 
         int count = 1;
         for (int currentCost = cost - costDecreasePrZone; currentCost > 0; currentCost -= costDecreasePrZone) {
@@ -29,7 +76,7 @@ public class NavMeshIsh2D {
             if (currentX < heightInZone) {
                 for (int currentY = startingPoint.y - count; currentY <= startingPoint.y + count; currentY++) {
                     if (currentY >= 0 && currentY < widthInZones) {
-                        extracted(currentCost, currentY, currentX, isCost);
+                        updateValues(currentCost, currentY, currentX, isCost);
                     }
                 }
             }
@@ -39,7 +86,7 @@ public class NavMeshIsh2D {
             if (currentX >= 0) {
                 for (int currentY = startingPoint.y - count; currentY <= startingPoint.y + count; currentY++) {
                     if (currentY >= 0 && currentY < widthInZones) {
-                        extracted(currentCost, currentY, currentX, isCost);
+                        updateValues(currentCost, currentY, currentX, isCost);
                     }
                 }
             }
@@ -49,7 +96,7 @@ public class NavMeshIsh2D {
             if (currentY < widthInZones) {
                 for (currentX = startingPoint.x - count + 1; currentX <= startingPoint.x + count - 1; currentX++) {
                     if (currentX >= 0 && currentX < heightInZone) {
-                        extracted(currentCost, currentY, currentX, isCost);
+                        updateValues(currentCost, currentY, currentX, isCost);
                     }
                 }
             }
@@ -59,7 +106,7 @@ public class NavMeshIsh2D {
             if (currentY >= 0) {
                 for (currentX = startingPoint.x - count + 1; currentX <= startingPoint.x + count - 1; currentX++) {
                     if (currentX >= 0 && currentX < heightInZone) {
-                        extracted(currentCost, currentY, currentX, isCost);
+                        updateValues(currentCost, currentY, currentX, isCost);
                     }
                 }
             }
@@ -70,7 +117,7 @@ public class NavMeshIsh2D {
 
     }
 
-    private void extracted(int currentCost, int currentY, int currentX, boolean isCost) {
+    private void updateValues(int currentCost, int currentY, int currentX, boolean isCost) {
         if (isCost) {
             int tempCost = costMap[currentX][currentY];
             costMap[currentX][currentY] = tempCost + currentCost;
