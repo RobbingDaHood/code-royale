@@ -119,26 +119,26 @@ class Player {
                     sitesReadyToTrain.add(site);
                 }
 
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), true);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), NavMeshMapTypes.BLOCKER);
             } else if (site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
                     site.getSiteStatus().getOwner().equals(OwnerType.ENEMY)) {
                 enemyTowers.add(site);
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getSiteStatus().getTowerRange()), true);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getSiteStatus().getTowerRange()), NavMeshMapTypes.COST);
             } else if (site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
                     site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
                 myTowers.add(site);
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), true);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), NavMeshMapTypes.BLOCKER);
             } else if (site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
                     site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
                 myMines.add(site);
                 goldIncome += site.getSiteStatus().getParam1();
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), true);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), NavMeshMapTypes.BLOCKER);
             } else if (!site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
 //                System.err.println("site.position: " + site.position);
 //                System.err.println("getZoneCoordinate(site.position): " + getZoneCoordinate(site.position));
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 5000, 500, getZoneCoordinate(mapWidth * 2), false);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 5000, 500, getZoneCoordinate(mapWidth * 2), NavMeshMapTypes.BENEFIT);
             } else {
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), true);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), NavMeshMapTypes.BLOCKER);
             }
         });
     }
@@ -171,7 +171,7 @@ class Player {
                 theirQueen = unit;
             } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.KNIGHT)) {
                 enemyKnights.add(unit);
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(unit.position), 500, 10, getZoneCoordinate(9999), true);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(unit.position), 500, 10, getZoneCoordinate(9999), NavMeshMapTypes.COST);
             } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.ARCHER)) {
                 enemyArchers.add(unit);
             } else if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.GIANT)) {
@@ -192,7 +192,7 @@ class Player {
 //            moveToThisPoint = getMapCoordinate(navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position), 20, 1));
 //        } else {
 //            //Offence
-            moveToThisPoint = getMapCoordinate(navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position), 1, 1));
+        moveToThisPoint = getMapCoordinate(navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position), 1, 1));
 //        }
         System.err.println("moveToThisPoint: " + moveToThisPoint);
         System.err.println("moveToThisPoint: " + getZoneCoordinate(moveToThisPoint));

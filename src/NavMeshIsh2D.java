@@ -3,12 +3,14 @@ import java.awt.*;
 public class NavMeshIsh2D {
     int[][] costMap;
     int[][] benefitMap;
+    int[][] blockerMap;
     int heightInZone;
     int widthInZones;
 
     public NavMeshIsh2D(int heightInZone, int widthInZones) {
         this.costMap = new int[heightInZone][widthInZones];
         this.benefitMap = new int[heightInZone][widthInZones];
+        this.blockerMap = new int[heightInZone][widthInZones];
         this.heightInZone = heightInZone;
         this.widthInZones = widthInZones;
     }
@@ -61,11 +63,11 @@ public class NavMeshIsh2D {
     }
 
     public int getCostBenefit(Point position, int costWeight, int benefitWeight) {
-        return benefitMap[position.x][position.y] * benefitWeight - costMap[position.x][position.y] * costWeight;
+        return benefitMap[position.x][position.y] * benefitWeight - blockerMap[position.x][position.y] * costWeight - costMap[position.x][position.y] * costWeight;
     }
 
-    public void insertGradiantValue(Point startingPoint, int cost, int costDecreasePrZone, int maxRange, boolean isCost) {
-        updateValues(cost, startingPoint.y, startingPoint.x, isCost);
+    public void insertGradiantValue(Point startingPoint, int cost, int costDecreasePrZone, int maxRange, NavMeshMapTypes navMeshMapTypes) {
+        updateValues(cost, startingPoint.y, startingPoint.x, navMeshMapTypes);
 
         int count = 1;
         for (int currentCost = cost - costDecreasePrZone; currentCost > 0 && count <= maxRange; currentCost -= costDecreasePrZone) {
@@ -76,7 +78,7 @@ public class NavMeshIsh2D {
             if (currentX < heightInZone) {
                 for (int currentY = startingPoint.y - count; currentY <= startingPoint.y + count; currentY++) {
                     if (currentY >= 0 && currentY < widthInZones) {
-                        updateValues(currentCost, currentY, currentX, isCost);
+                        updateValues(currentCost, currentY, currentX, navMeshMapTypes);
                     }
                 }
             }
@@ -86,7 +88,7 @@ public class NavMeshIsh2D {
             if (currentX >= 0) {
                 for (int currentY = startingPoint.y - count; currentY <= startingPoint.y + count; currentY++) {
                     if (currentY >= 0 && currentY < widthInZones) {
-                        updateValues(currentCost, currentY, currentX, isCost);
+                        updateValues(currentCost, currentY, currentX, navMeshMapTypes);
                     }
                 }
             }
@@ -96,7 +98,7 @@ public class NavMeshIsh2D {
             if (currentY < widthInZones) {
                 for (currentX = startingPoint.x - count + 1; currentX <= startingPoint.x + count - 1; currentX++) {
                     if (currentX >= 0 && currentX < heightInZone) {
-                        updateValues(currentCost, currentY, currentX, isCost);
+                        updateValues(currentCost, currentY, currentX, navMeshMapTypes);
                     }
                 }
             }
@@ -106,7 +108,7 @@ public class NavMeshIsh2D {
             if (currentY >= 0) {
                 for (currentX = startingPoint.x - count + 1; currentX <= startingPoint.x + count - 1; currentX++) {
                     if (currentX >= 0 && currentX < heightInZone) {
-                        updateValues(currentCost, currentY, currentX, isCost);
+                        updateValues(currentCost, currentY, currentX, navMeshMapTypes);
                     }
                 }
             }
@@ -117,13 +119,16 @@ public class NavMeshIsh2D {
 
     }
 
-    private void updateValues(int currentCost, int currentY, int currentX, boolean isCost) {
-        if (isCost) {
+    private void updateValues(int currentCost, int currentY, int currentX, NavMeshMapTypes navMeshMapTypes) {
+        if (navMeshMapTypes.equals(NavMeshMapTypes.COST)) {
             int tempCost = costMap[currentX][currentY];
             costMap[currentX][currentY] = tempCost + currentCost;
-        } else {
+        } else if (navMeshMapTypes.equals(NavMeshMapTypes.BENEFIT)) {
             int tempCost = benefitMap[currentX][currentY];
             benefitMap[currentX][currentY] = tempCost + currentCost;
+        } else {
+            int tempCost = blockerMap[currentX][currentY];
+            blockerMap[currentX][currentY] = tempCost + currentCost;
         }
     }
 

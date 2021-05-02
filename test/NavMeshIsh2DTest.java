@@ -31,8 +31,8 @@ class NavMeshIsh2DTest {
     public void simpleAddMix() {
         NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(20, 15);
 
-        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, 99, true);
-        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 2, 99, false);
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, 99, NavMeshMapTypes.COST);
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 2, 99, NavMeshMapTypes.BENEFIT);
 
         navMeshIsh2D.printMaps();
 
@@ -47,11 +47,11 @@ class NavMeshIsh2DTest {
     public void simpleGetBestNeighbour() {
         NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(20, 15);
 
-        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, 99, true);
-        navMeshIsh2D.insertGradiantValue(new Point(5, 6), 100, 2, 99, true);
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, 99, NavMeshMapTypes.COST);
+        navMeshIsh2D.insertGradiantValue(new Point(5, 6), 100, 2, 99, NavMeshMapTypes.COST);
 
-        navMeshIsh2D.insertGradiantValue(new Point(1, 1), 100, 1, 99, false);
-        navMeshIsh2D.insertGradiantValue(new Point(7, 9), 100, 2, 99, false);
+        navMeshIsh2D.insertGradiantValue(new Point(1, 1), 100, 1, 99, NavMeshMapTypes.BENEFIT);
+        navMeshIsh2D.insertGradiantValue(new Point(7, 9), 100, 2, 99, NavMeshMapTypes.BENEFIT);
 
         navMeshIsh2D.printMaps();
 
@@ -69,7 +69,7 @@ class NavMeshIsh2DTest {
     public void simpleAddMaxRange() {
         NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(20, 15);
 
-        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, 2, true);
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, 2, NavMeshMapTypes.COST);
 
         navMeshIsh2D.printMaps();
     }
@@ -78,8 +78,8 @@ class NavMeshIsh2DTest {
     public void simplePrintPosition() {
         NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(20, 15);
 
-        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, 99, true);
-        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 2, 99, false);
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, 99, NavMeshMapTypes.COST);
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 2, 99, NavMeshMapTypes.BENEFIT);
 
         navMeshIsh2D.printPosition(new Point(2, 2), 6);
         navMeshIsh2D.printPosition(new Point(2, 2), 2);
