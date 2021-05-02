@@ -117,7 +117,7 @@ class Player {
                     sitesReadyToTrain.add(site);
                 }
 
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 9999, 0, getZoneCoordinate(site.getRadius()), true);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), true);
             } else if (site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
                     site.getSiteStatus().getOwner().equals(OwnerType.ENEMY)) {
                 enemyTowers.add(site);
@@ -125,18 +125,18 @@ class Player {
             } else if (site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
                     site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
                 myTowers.add(site);
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 9999, 0, getZoneCoordinate(site.getRadius()), true);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), true);
             } else if (site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
                     site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
                 myMines.add(site);
                 goldIncome += site.getSiteStatus().getParam1();
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 9999, 0, getZoneCoordinate(site.getRadius()), true);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), true);
             } else if (!site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
 //                System.err.println("site.position: " + site.position);
 //                System.err.println("getZoneCoordinate(site.position): " + getZoneCoordinate(site.position));
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 500, 10, getZoneCoordinate(mapWidth*2), false);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 500, 10, getZoneCoordinate(mapWidth * 2), false);
             } else {
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 9999, 0, getZoneCoordinate(site.getRadius()), true);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), true);
             }
         });
     }
@@ -156,6 +156,7 @@ class Player {
 
             if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.QUEEN)) {
                 ourQueen = unit;
+                System.err.println("ourQueen: " + ourQueen.position);
                 System.err.println("ourQueen: " + getZoneCoordinate(ourQueen.position));
 
                 if (iAmBlue == null) {
@@ -168,7 +169,7 @@ class Player {
                 theirQueen = unit;
             } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.KNIGHT)) {
                 enemyKnights.add(unit);
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(unit.position), 500, 100, getZoneCoordinate(9999), true);
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(unit.position), 5000, 100, getZoneCoordinate(9999), true);
             } else if (unit.getOwner().equals(OwnerType.ENEMY) && unit.getUnitType().equals(UnitType.ARCHER)) {
                 enemyArchers.add(unit);
             } else if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.GIANT)) {
@@ -180,24 +181,25 @@ class Player {
     }
 
     private static void buildBuildingsOffence() {
-        String order = "MOVE " + ((int) theirQueen.getPosition().getX()) + " " + ((int) theirQueen.getPosition().getY());
+        boolean hasLowGoldIncome = goldIncome < 5;
+        boolean hasLowLife = ourQueen.getHealth() < 25;
 
-        List<Unit> threadeningKnights = units.stream()
-                .filter(unit -> unit.owner.equals(OwnerType.ENEMY))
-                .filter(unit -> unit.unitType.equals(UnitType.KNIGHT))
-                .filter(unit -> distanceIsBelow(ourQueen, unit.getThreadArea(), unit.getPosition()))
-                .collect(Collectors.toList());
+        Point moveToThisPoint;
+        if (hasLowLife && !hasLowGoldIncome) {
+            //Defence
+            moveToThisPoint = getMapCoordinate(navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position), 20, 1));
+        } else {
+            //Offence
+            moveToThisPoint = getMapCoordinate(navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position), 1, 1));
+        }
+        System.err.println("moveToThisPoint: " + moveToThisPoint);
+        System.err.println("moveToThisPoint: " + getZoneCoordinate(moveToThisPoint));
 
-//        if (threadeningKnights.size() > 0) { //Run away and change everything to towers
-//
-//            List<Unit> threadeningKnights = units.stream()
-//                    .map(unit -> unit.position.)
-//        }
 
+        String order = "MOVE " + moveToThisPoint.x + " " + moveToThisPoint.y;
+        int radiusToBuildBuilding = 200;
 
         if (gold > 120 && myGiantBarracks.size() < 1) {
-            int radiusToBuildBuilding = 500;
-
             Optional<Site> closestNonFriendlySite = sites.stream()
                     .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
                     .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
@@ -206,8 +208,17 @@ class Player {
             if (closestNonFriendlySite.isPresent()) {
                 order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-GIANT";
             }
-        } else if (myKnightBarracks.size() < 1) {
-            int radiusToBuildBuilding = 300;
+        } else if (navMeshIsh2D.costMap[getZoneCoordinate(ourQueen.position.x)][getZoneCoordinate(ourQueen.position.y)] > 5000) {
+            Optional<Site> closestNonFriendlySite = sites.stream()
+                    .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
+                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
+                    .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
+                    .min(distanceTo(ourQueen.getPosition()));
+
+            if (closestNonFriendlySite.isPresent()) {
+                order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " TOWER";
+            }
+        } else if (myKnightBarracks.size() < 1 && !hasLowGoldIncome) {
             int radiusToBuildBuildingCloseToEnemyQueen = 1000;
 
             Optional<Site> closestNonFriendlySite = sites.stream()
@@ -218,42 +229,29 @@ class Player {
 
             if (closestNonFriendlySite.isPresent() && distanceIsBelow(theirQueen, radiusToBuildBuildingCloseToEnemyQueen).test(closestNonFriendlySite.get())) {
                 order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-KNIGHT";
-            } else {
-                closestNonFriendlySite = sites.stream()
-                        .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
-                        .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) ||
-                                (site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) &&
-                                        site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
-                                        site.getSiteStatus().getMaxMineSize() > site.getSiteStatus().getParam1())
-                        )
-                        .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
-                        .min(distanceTo(ourQueen.getPosition()));
-                if (closestNonFriendlySite.isPresent()) {
-                    order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " MINE";
-                }
             }
         } else {
-            int radiusToBuildBuilding = 500;
-
-            order = sites.stream()
-                    .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
-                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
-                    .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
-                    .min(distanceTo(ourQueen.getPosition()))
-                    .map(site -> "BUILD " + site.getSiteId() + " TOWER")
-                    .orElseGet(() ->
-                            myTowers.stream()
-                                    .filter(site -> site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
-                                    .filter(site -> site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
-                                    .min(distanceTo(iAmBlue ? new Point(1920, 0) : new Point(0, 1000)))
-                                    .map(site -> "BUILD " + site.getSiteId() + " TOWER")
-                                    .orElseGet(() ->
-                                            iAmBlue ? "MOVE 1920 0" : "MOVE 0 1000"
-                                    )
-                    );
+            order = buildMine(order, radiusToBuildBuilding);
         }
 
         System.out.println(order);
+    }
+
+    private static String buildMine(String order, int radiusToBuildBuilding) {
+        Optional<Site> closestNonFriendlySite = sites.stream()
+                .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
+                .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) ||
+                        (site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) &&
+                                site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
+                                site.getSiteStatus().getMaxMineSize() > site.getSiteStatus().getParam1())
+                )
+                .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
+                .min(distanceTo(ourQueen.getPosition()));
+
+        if (closestNonFriendlySite.isPresent()) {
+            order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " MINE";
+        }
+        return order;
     }
 
     private static void trainUnitsOffence() {
