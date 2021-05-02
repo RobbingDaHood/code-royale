@@ -1,6 +1,7 @@
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
+import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -12,8 +13,9 @@ class NavMeshIsh2DTest {
 
         for (int y = 14; y >= 0; y--) {
             for (int x = 19; x >= 0; x--) {
-                assertEquals(0, navMeshIsh2D.costMap[x][y]);
-                assertEquals(0, navMeshIsh2D.benefitMap[x][y]);
+                assertEquals(0, navMeshIsh2D.maps.get(NavMeshMapTypes.COST)[x][y]);
+                assertEquals(0, navMeshIsh2D.maps.get(NavMeshMapTypes.BENEFIT)[x][y]);
+                assertEquals(0, navMeshIsh2D.maps.get(NavMeshMapTypes.BLOCKER)[x][y]);
             }
         }
     }
@@ -36,11 +38,11 @@ class NavMeshIsh2DTest {
 
         navMeshIsh2D.printMaps();
 
-        assertEquals(100, navMeshIsh2D.costMap[2][2]);
-        assertEquals(99, navMeshIsh2D.costMap[1][1]);
-        assertEquals(98, navMeshIsh2D.costMap[0][0]);
-        assertEquals(99, navMeshIsh2D.costMap[3][3]);
-        assertEquals(98, navMeshIsh2D.costMap[3][4]);
+        assertEquals(100, navMeshIsh2D.maps.get(NavMeshMapTypes.COST)[2][2]);
+        assertEquals(99, navMeshIsh2D.maps.get(NavMeshMapTypes.COST)[1][1]);
+        assertEquals(98, navMeshIsh2D.maps.get(NavMeshMapTypes.COST)[0][0]);
+        assertEquals(99, navMeshIsh2D.maps.get(NavMeshMapTypes.COST)[3][3]);
+        assertEquals(98, navMeshIsh2D.maps.get(NavMeshMapTypes.COST)[3][4]);
     }
 
     @Test
@@ -55,14 +57,49 @@ class NavMeshIsh2DTest {
 
         navMeshIsh2D.printMaps();
 
-        assertEquals(new Point(2,4), navMeshIsh2D.getBestNeighbour(new Point(3,3), 1, 1));
-        assertEquals(new Point(2,4), navMeshIsh2D.getBestNeighbour(new Point(3,3), 0, 1));
-        assertEquals(new Point(4,2), navMeshIsh2D.getBestNeighbour(new Point(3,3), 1, 0));
+        assertEquals(new Point(2, 4), navMeshIsh2D.getBestNeighbour(new Point(3, 3),
+                new HashMap<NavMeshMapTypes, Integer>() {
+                    {
+                        put(NavMeshMapTypes.COST, -1);
+                        put(NavMeshMapTypes.BENEFIT, 1);
+                    }
+                }));
+        assertEquals(new Point(2, 4), navMeshIsh2D.getBestNeighbour(new Point(3, 3),
+                new HashMap<NavMeshMapTypes, Integer>() {
+                    {
+                        put(NavMeshMapTypes.COST, 0);
+                        put(NavMeshMapTypes.BENEFIT, 1);
+                    }
+                }));
+        assertEquals(new Point(4, 2), navMeshIsh2D.getBestNeighbour(new Point(3, 3),
+                new HashMap<NavMeshMapTypes, Integer>() {
+                    {
+                        put(NavMeshMapTypes.COST, -1);
+                        put(NavMeshMapTypes.BENEFIT, 0);
+                    }
+                }));
 
-        assertEquals(new Point(6,10), navMeshIsh2D.getBestNeighbour(new Point(7,9), 1, 1));
-        assertEquals(new Point(6,8), navMeshIsh2D.getBestNeighbour(new Point(7,9), 0, 1));
-        assertEquals(new Point(6,10), navMeshIsh2D.getBestNeighbour(new Point(7,9), 1, 0));
-
+        assertEquals(new Point(7, 9), navMeshIsh2D.getBestNeighbour(new Point(7, 9),
+                new HashMap<NavMeshMapTypes, Integer>() {
+                    {
+                        put(NavMeshMapTypes.COST, -1);
+                        put(NavMeshMapTypes.BENEFIT, 1);
+                    }
+                }));
+        assertEquals(new Point(7, 9), navMeshIsh2D.getBestNeighbour(new Point(7, 9),
+                new HashMap<NavMeshMapTypes, Integer>() {
+                    {
+                        put(NavMeshMapTypes.COST, 0);
+                        put(NavMeshMapTypes.BENEFIT, 1);
+                    }
+                }));
+        assertEquals(new Point(6, 10), navMeshIsh2D.getBestNeighbour(new Point(7, 9),
+                new HashMap<NavMeshMapTypes, Integer>() {
+                    {
+                        put(NavMeshMapTypes.COST, -1);
+                        put(NavMeshMapTypes.BENEFIT, 0);
+                    }
+                }));
     }
 
     @Test

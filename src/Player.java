@@ -192,7 +192,14 @@ class Player {
 //            moveToThisPoint = getMapCoordinate(navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position), 20, 1));
 //        } else {
 //            //Offence
-        moveToThisPoint = getMapCoordinate(navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position), 1, 1));
+        moveToThisPoint = getMapCoordinate(navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position),
+                new HashMap<NavMeshMapTypes, Integer>() {
+                    {
+                        put(NavMeshMapTypes.COST, -1);
+                        put(NavMeshMapTypes.BENEFIT, 1);
+                        put(NavMeshMapTypes.BLOCKER, -1);
+                    }
+                }));
 //        }
         System.err.println("moveToThisPoint: " + moveToThisPoint);
         System.err.println("moveToThisPoint: " + getZoneCoordinate(moveToThisPoint));
@@ -201,7 +208,7 @@ class Player {
         String order = "MOVE " + moveToThisPoint.x + " " + moveToThisPoint.y;
         int radiusToBuildBuilding = 300;
 
-        if (navMeshIsh2D.costMap[getZoneCoordinate(ourQueen.position.x)][getZoneCoordinate(ourQueen.position.y)] > 1500) {
+        if (navMeshIsh2D.maps.get(NavMeshMapTypes.COST)[getZoneCoordinate(ourQueen.position.x)][getZoneCoordinate(ourQueen.position.y)] > 1500) {
             Optional<Site> closestNonFriendlySite = sites.stream()
                     .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
                     .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
