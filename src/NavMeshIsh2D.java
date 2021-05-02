@@ -136,5 +136,18 @@ public class NavMeshIsh2D {
         }
     }
 
+    public void printPosition(Point currentPosition, int range) {
+        for (int x = currentPosition.x - range; x <= currentPosition.x + range; x++) {
+            if (x < heightInZone && x >= 0) {
+                for (int y = currentPosition.y - range; y <= currentPosition.y + range; y++) {
+                    if (y < widthInZones && y >= 0) {
+                        System.err.print("[" + x + ":" + y + "," + costMap[x][y] + "," + benefitMap[x][y] + "]");
+                    }
+                }
+            }
+            System.err.println();
+        }
+    }
+
 
 }

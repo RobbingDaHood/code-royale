@@ -74,4 +74,15 @@ class NavMeshIsh2DTest {
         navMeshIsh2D.printMaps();
     }
 
+    @Test
+    public void simplePrintPosition() {
+        NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(20, 15);
+
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, 99, true);
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 2, 99, false);
+
+        navMeshIsh2D.printPosition(new Point(2, 2), 6);
+        navMeshIsh2D.printPosition(new Point(2, 2), 2);
+    }
+
 }

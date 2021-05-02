@@ -37,6 +37,9 @@ class Player {
 
     private static NavMeshIsh2D navMeshIsh2D = null;
 
+    private static final int mapHeight = 1000;
+    private static final int mapWidth = 1920;
+
     public static void main(String args[]) {
         Scanner in = new Scanner(System.in);
         int numSites = in.nextInt();
@@ -48,12 +51,14 @@ class Player {
 
         // game loop
         while (true) {
-//            navMeshIsh2D = new NavMeshIsh2D();
+            navMeshIsh2D = new NavMeshIsh2D(getZoneCoordinate(mapHeight), getZoneCoordinate(mapWidth));
             gold = in.nextInt();
             int touchedSite = in.nextInt(); // -1 if none
 
             updateSites(in);
             updateUnits(in);
+
+            navMeshIsh2D.printMaps();
 
             //Handle many towers (Build some giants?)
             //Handle many knights (Build some towers?)
@@ -67,6 +72,22 @@ class Player {
             gameTurns++;
             System.err.println("gameTurns: " + gameTurns);
         }
+    }
+
+    private static int getZoneCoordinate(int mapCoordinate) {
+        return mapCoordinate / 10;
+    }
+
+    private static int getMapCoordinate(int zoneCoordine) {
+        return zoneCoordine * 10;
+    }
+
+    private static Point getZoneCoordinate(Point mapCoordinate) {
+        return new Point(getZoneCoordinate(mapCoordinate.x), getZoneCoordinate(mapCoordinate.y));
+    }
+
+    private static Point getMapCoordinate(Point zoneCoordine) {
+        return new Point(getMapCoordinate(zoneCoordine.x), getMapCoordinate(zoneCoordine.y));
     }
 
     private static void updateSites(Scanner in) {
@@ -101,6 +122,8 @@ class Player {
                 if (site.getSiteStatus().getParam1() == 0) {
                     sitesReadyToTrain.add(site);
                 }
+
+                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 9999, 0, getZoneCoordinate(site.getRadius()), true);
             } else if (site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
                     site.getSiteStatus().getOwner().equals(OwnerType.ENEMY)) {
                 enemyTowers.add(site);
