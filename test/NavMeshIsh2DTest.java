@@ -18,12 +18,21 @@ class NavMeshIsh2DTest {
         }
     }
 
+//    @Test
+//    public void simpleAddCost() {
+//        NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(2000, 2000);
+//
+//        navMeshIsh2D.insertGradiantValue(new Point(1000, 1000), 3000, 1, true);
+//
+//        navMeshIsh2D.printMaps();
+//    }
+
     @Test
-    public void simpleAddCost() {
+    public void simpleAddMix() {
         NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(20, 15);
 
-        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, true);
-        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 2, false);
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, 99, true);
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 2, 99, false);
 
         navMeshIsh2D.printMaps();
 
@@ -38,11 +47,11 @@ class NavMeshIsh2DTest {
     public void simpleGetBestNeighbour() {
         NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(20, 15);
 
-        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, true);
-        navMeshIsh2D.insertGradiantValue(new Point(5, 6), 100, 2, true);
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, 99, true);
+        navMeshIsh2D.insertGradiantValue(new Point(5, 6), 100, 2, 99, true);
 
-        navMeshIsh2D.insertGradiantValue(new Point(1, 1), 100, 1, false);
-        navMeshIsh2D.insertGradiantValue(new Point(7, 9), 100, 2, false);
+        navMeshIsh2D.insertGradiantValue(new Point(1, 1), 100, 1, 99, false);
+        navMeshIsh2D.insertGradiantValue(new Point(7, 9), 100, 2, 99, false);
 
         navMeshIsh2D.printMaps();
 
@@ -54,7 +63,15 @@ class NavMeshIsh2DTest {
         assertEquals(new Point(6,8), navMeshIsh2D.getBestNeighbour(new Point(7,9), 0, 1));
         assertEquals(new Point(6,10), navMeshIsh2D.getBestNeighbour(new Point(7,9), 1, 0));
 
+    }
 
+    @Test
+    public void simpleAddMaxRange() {
+        NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(20, 15);
+
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, 2, true);
+
+        navMeshIsh2D.printMaps();
     }
 
 }

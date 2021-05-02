@@ -64,11 +64,11 @@ public class NavMeshIsh2D {
         return benefitMap[position.x][position.y] * benefitWeight - costMap[position.x][position.y] * costWeight;
     }
 
-    public void insertGradiantValue(Point startingPoint, int cost, int costDecreasePrZone, boolean isCost) {
+    public void insertGradiantValue(Point startingPoint, int cost, int costDecreasePrZone, int maxRange, boolean isCost) {
         updateValues(cost, startingPoint.y, startingPoint.x, isCost);
 
         int count = 1;
-        for (int currentCost = cost - costDecreasePrZone; currentCost > 0; currentCost -= costDecreasePrZone) {
+        for (int currentCost = cost - costDecreasePrZone; currentCost > 0 && count <= maxRange; currentCost -= costDecreasePrZone) {
             //Four rows
 
             //Top row
@@ -128,8 +128,8 @@ public class NavMeshIsh2D {
     }
 
     public void printMaps() {
-        for (int x = 0; x < 20; x++) {
-            for (int y = 0; y < 15; y++) {
+        for (int x = 0; x < heightInZone; x++) {
+            for (int y = 0; y < widthInZones; y++) {
                 System.err.print("[" + x + ":" + y + "," + costMap[x][y] + "," + benefitMap[x][y] + "]");
             }
             System.err.println();

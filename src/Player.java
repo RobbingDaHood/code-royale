@@ -35,6 +35,8 @@ class Player {
 
     private static Boolean iAmBlue = null;
 
+    private static NavMeshIsh2D navMeshIsh2D = null;
+
     public static void main(String args[]) {
         Scanner in = new Scanner(System.in);
         int numSites = in.nextInt();
@@ -46,6 +48,7 @@ class Player {
 
         // game loop
         while (true) {
+//            navMeshIsh2D = new NavMeshIsh2D();
             gold = in.nextInt();
             int touchedSite = in.nextInt(); // -1 if none
 
