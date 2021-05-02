@@ -22,7 +22,8 @@ class NavMeshIsh2DTest {
     public void simpleAddCost() {
         NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(20, 15);
 
-        navMeshIsh2D.insertGradiantCost(new Point(2, 2), 100, 1);
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 1, true);
+        navMeshIsh2D.insertGradiantValue(new Point(2, 2), 100, 2, false);
 
         navMeshIsh2D.printMaps();
 
