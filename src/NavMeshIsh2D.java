@@ -144,6 +144,20 @@ public class NavMeshIsh2D {
         }
     }
 
+    public void printPosition(Point currentPosition, int range, Map<NavMeshMapTypes, Integer> typeWeights) {
+        System.err.println("printPosition: " + typeWeights.entrySet());
+        for (int y = currentPosition.y - range; y <= currentPosition.y + range; y++) {
+            if (y < widthInZones && y >= 0) {
+                for (int x = currentPosition.x - range; x <= currentPosition.x + range; x++) {
+                    if (x < heightInZone && x >= 0) {
+                        System.err.print("[" + x + ":" + y + ", " + getCostBenefit(new Point(x, y), typeWeights) + "]");
+                    }
+                }
+            }
+            System.err.println();
+        }
+    }
+
     private String printZone(int finalX, int finalY) {
         return Arrays.stream(NavMeshMapTypes.values()).sequential()
                 .map(type -> type + ":" + maps.get(type)[finalX][finalY])
