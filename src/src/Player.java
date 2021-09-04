@@ -287,10 +287,10 @@ class Player {
         Point getBestTowerDefenceZone;
         if (defensiveTower.isPresent()) {
             navMeshIsh2D.printPosition(getZoneCoordinate(defensiveTower.get().position), 1, typeWeights);
-            getBestTowerDefenceZone = navMeshIsh2D.getBestNeighbour(getZoneCoordinate(defensiveTower.get().position), typeWeights);
+            getBestTowerDefenceZone = navMeshIsh2D.getBest(getZoneCoordinate(defensiveTower.get().position), typeWeights, 3);
         } else {
             navMeshIsh2D.printPosition(getZoneCoordinate(ourQueen.position), 1, typeWeights);
-            getBestTowerDefenceZone = navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position), typeWeights);
+            getBestTowerDefenceZone = navMeshIsh2D.getBest(getZoneCoordinate(ourQueen.position), typeWeights, 3);
         }
 
         moveToThisPoint = getMapCoordinate(getBestTowerDefenceZone);
@@ -637,7 +637,6 @@ class Player {
 
         int radiusNotToSpawnFromEnemyQueen = 100;
 
-        System.err.println("enemyTowers.size(): " + enemyTowers.size());
         List<String> knightSites = new LinkedList<>();
         if (enemyArchers.size() < 6 && enemyTowers.size() < 6 && (isBursting || GameStates.STARTING.equals(gameState))) {
             knightSites = sitesReadyToTrain.stream()

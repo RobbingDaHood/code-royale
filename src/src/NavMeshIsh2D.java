@@ -2,6 +2,7 @@ package src;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,35 +20,52 @@ public class NavMeshIsh2D {
     }
 
     public Point getBestNeighbour(Point currentPosition, Map<NavMeshMapTypes, Integer> typeWeights) {
+        return getBest(currentPosition,typeWeights, 1);
+    }
+
+    public Point getBest(Point currentPosition, Map<NavMeshMapTypes, Integer> typeWeights, int maxRange) {
         Point result = currentPosition;
 
-        int currentY = currentPosition.y - 1;
-        if (currentY >= 0) {
-            for (int currentX = currentPosition.x - 1; currentX <= currentPosition.x + 1; currentX++) {
-                if (currentX >= 0 && currentX < heightInZone) {
-                    result = getBestCandidate(typeWeights, result, new Point(currentX, currentY));
+        for (int count = 1; count <= maxRange; count++) {
+            //Top row
+            int currentX = currentPosition.x + count;
+            if (currentX < heightInZone) {
+                for (int currentY = currentPosition.y - count; currentY <= currentPosition.y + count; currentY++) {
+                    if (currentY >= 0 && currentY < widthInZones) {
+                        result = getBestCandidate(typeWeights, result, new Point(currentX, currentY));
+                    }
                 }
             }
-        }
 
-        currentY = currentPosition.y + 1;
-        if (currentY < widthInZones) {
-            for (int currentX = currentPosition.x - 1; currentX <= currentPosition.x + 1; currentX++) {
-                if (currentX >= 0 && currentX < heightInZone) {
-                    result = getBestCandidate(typeWeights, result, new Point(currentX, currentY));
+            //Bottom row
+            currentX = currentPosition.x - count;
+            if (currentX >= 0) {
+                for (int currentY = currentPosition.y - count; currentY <= currentPosition.y + count; currentY++) {
+                    if (currentY >= 0 && currentY < widthInZones) {
+                        result = getBestCandidate(typeWeights, result, new Point(currentX, currentY));
+                    }
                 }
             }
-        }
 
-        int currentX = currentPosition.x + 1;
-        currentY = currentPosition.y;
-        if (currentX < heightInZone) {
-            result = getBestCandidate(typeWeights, result, new Point(currentX, currentY));
-        }
+            //Right row
+            int currentY = currentPosition.y + count;
+            if (currentY < widthInZones) {
+                for (currentX = currentPosition.x - count + 1; currentX <= currentPosition.x + count - 1; currentX++) {
+                    if (currentX >= 0 && currentX < heightInZone) {
+                        result = getBestCandidate(typeWeights, result, new Point(currentX, currentY));
+                    }
+                }
+            }
 
-        currentX = currentPosition.x - 1;
-        if (currentX >= 0) {
-            result = getBestCandidate(typeWeights, result, new Point(currentX, currentY));
+            //Left row
+            currentY = currentPosition.y - count;
+            if (currentY >= 0) {
+                for (currentX = currentPosition.x - count + 1; currentX <= currentPosition.x + count - 1; currentX++) {
+                    if (currentX >= 0 && currentX < heightInZone) {
+                        result = getBestCandidate(typeWeights, result, new Point(currentX, currentY));
+                    }
+                }
+            }
         }
 
         return result;
@@ -152,21 +170,21 @@ public class NavMeshIsh2D {
         map[currentX][currentY] = Math.max(tempCost, currentCost);
     }
 
-    public void printMaps() {
+    public void printMaps(EnumSet<NavMeshMapTypes> types) {
         for (int y = 0; y < widthInZones; y++) {
             for (int x = 0; x < heightInZone; x++) {
-                System.err.print(printZone(x, y));
+                System.err.print(printZone(x, y, types));
             }
             System.err.println();
         }
     }
 
-    public void printPosition(Point currentPosition, int range) {
+    public void printPosition(Point currentPosition, int range, EnumSet<NavMeshMapTypes> types) {
         for (int y = currentPosition.y - range; y <= currentPosition.y + range; y++) {
             if (y < widthInZones && y >= 0) {
                 for (int x = currentPosition.x - range; x <= currentPosition.x + range; x++) {
                     if (x < heightInZone && x >= 0) {
-                        System.err.print(printZone(x, y));
+                        System.err.print(printZone(x, y, types));
                     }
                 }
             }
@@ -188,8 +206,8 @@ public class NavMeshIsh2D {
         }
     }
 
-    private String printZone(int finalX, int finalY) {
-        return Arrays.stream(NavMeshMapTypes.values()).sequential()
+    private String printZone(int finalX, int finalY, EnumSet<NavMeshMapTypes> types) {
+        return types.stream()
                 .map(type -> type + ":" + maps.get(type)[finalX][finalY])
                 .collect(Collectors.joining(",", "[" + finalX + ":" + finalY + ", ", "]"))
                 .trim();
