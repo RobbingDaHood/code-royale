@@ -1,3 +1,5 @@
+package src;
+
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -130,7 +132,7 @@ class Player {
                 myTowers.add(site);
                 navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), NavMeshMapTypes.BLOCKER);
                 navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 20, 1, getZoneCoordinate(site.getSiteStatus().getTowerRange()), NavMeshMapTypes.TOWER_PROTECTION);
-//                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), -2, 0, getZoneCoordinate(site.getRadius()), NavMeshMapTypes.ENEMY_KNIGHTS);
+//                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), -2, 0, getZoneCoordinate(site.getRadius()), src.NavMeshMapTypes.ENEMY_KNIGHTS);
             } else if (site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
                     site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
                 myMines.add(site);
@@ -200,18 +202,18 @@ class Player {
         boolean strongDefence = false;
         boolean fortDefence = false;
 
-//        navMeshIsh2D.printPosition(getZoneCoordinate(ourQueen.position), 1, new HashMap<NavMeshMapTypes, Integer>() {
+//        navMeshIsh2D.printPosition(getZoneCoordinate(ourQueen.position), 1, new HashMap<src.NavMeshMapTypes, Integer>() {
 //            {
-//                put(NavMeshMapTypes.ENEMY_KNIGHTS, -3);
-//                put(NavMeshMapTypes.BLOCKER, -1);
-//                put(NavMeshMapTypes.NON_TOWER_PLACES_TO_BUILD, 1);
+//                put(src.NavMeshMapTypes.ENEMY_KNIGHTS, -3);
+//                put(src.NavMeshMapTypes.BLOCKER, -1);
+//                put(src.NavMeshMapTypes.NON_TOWER_PLACES_TO_BUILD, 1);
 //            }
 //        });
-//        navMeshIsh2D.printPosition(getZoneCoordinate(ourQueen.position), 1, new HashMap<NavMeshMapTypes, Integer>() {
+//        navMeshIsh2D.printPosition(getZoneCoordinate(ourQueen.position), 1, new HashMap<src.NavMeshMapTypes, Integer>() {
 //            {
-//                put(NavMeshMapTypes.ENEMY_KNIGHTS, -2);
-//                put(NavMeshMapTypes.BLOCKER, -1);
-//                put(NavMeshMapTypes.NON_TOWER_PLACES_TO_BUILD, 1);
+//                put(src.NavMeshMapTypes.ENEMY_KNIGHTS, -2);
+//                put(src.NavMeshMapTypes.BLOCKER, -1);
+//                put(src.NavMeshMapTypes.NON_TOWER_PLACES_TO_BUILD, 1);
 //            }
 //        });
 
@@ -332,12 +334,12 @@ class Player {
                 gotOrder = true;
             }
 //        } else if (myGiantBarracks.size() < 1 && !enemyTowers.isEmpty()) {
-//            Optional<Site> closestNonFriendlySite = sites.stream()
+//            Optional<src.Site> closestNonFriendlySite = sites.stream()
 //                    .filter(distanceIsBelow(ourQueen, radiusToBuildBuilding))
-//                    .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
-//                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) ||
-//                            !site.getSiteStatus().getStructureType().equals(StructureType.BARRACKS) ||
-//                            !site.getSiteStatus().getStructureType().equals(StructureType.MINE))
+//                    .filter(site -> !site.getSiteStatus().getStructureType().equals(src.StructureType.TOWER))
+//                    .filter(site -> !site.getSiteStatus().getOwner().equals(src.OwnerType.FRIENDLY) ||
+//                            !site.getSiteStatus().getStructureType().equals(src.StructureType.BARRACKS) ||
+//                            !site.getSiteStatus().getStructureType().equals(src.StructureType.MINE))
 //                    .min(distanceTo(moveToThisPoint));
 //            if (closestNonFriendlySite.isPresent()) {
 //                order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-GIANT";
@@ -393,10 +395,10 @@ class Player {
 //        if (myGiants.size() < enemyTowers.size() / 2) {
 //            giantSites = sitesReadyToTrain.stream()
 //                    .filter(distanceIsAbove(theirQueen, radiusNotToSpawnFromEnemyQueen))
-//                    .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.GIANT))
+//                    .filter(site -> site.getSiteStatus().getUnitType().equals(src.UnitType.GIANT))
 //                    .filter(canPayForTraining(gold, goldUsed))
 //                    .sorted(distanceTo(theirQueen.getPosition()))
-//                    .map(Site::getSiteId)
+//                    .map(src.Site::getSiteId)
 //                    .map(String::valueOf);
 //            System.err.println("giantSites: ");
 //        }

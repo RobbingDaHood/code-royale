@@ -1,4 +1,8 @@
+package src;
+
 import org.junit.jupiter.api.Test;
+import src.NavMeshIsh2D;
+import src.NavMeshMapTypes;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -22,7 +26,7 @@ class NavMeshIsh2DTest {
 
 //    @Test
 //    public void simpleAddCost() {
-//        NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(2000, 2000);
+//        src.NavMeshIsh2D navMeshIsh2D = new src.NavMeshIsh2D(2000, 2000);
 //
 //        navMeshIsh2D.insertGradiantValue(new Point(1000, 1000), 3000, 1, true);
 //

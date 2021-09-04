@@ -1,3 +1,5 @@
+package src;
+
 public class UnitThreadAreaCalculator {
 
     public static int threadArea(Unit unit) {

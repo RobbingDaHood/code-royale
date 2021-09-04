@@ -1,3 +1,5 @@
+package src;
+
 public class SiteStatus {
     Site site;
     int siteId;

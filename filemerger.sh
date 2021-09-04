@@ -1,7 +1,7 @@
 #!/bin/bash
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 
-src_path=$parent_path/src/
+src_path=$parent_path/src/src/
 file_type=java
 out_dir=$parent_path/out/
 out_file=$out_dir/Out.$file_type

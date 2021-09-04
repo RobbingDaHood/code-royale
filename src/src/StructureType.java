@@ -1,3 +1,5 @@
+package src;
+
 public enum StructureType {
     NO_STRUCTURE(-1),
     MINE(0),

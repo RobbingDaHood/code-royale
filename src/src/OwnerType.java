@@ -1,3 +1,5 @@
+package src;
+
 public enum OwnerType {
     NO_STRUCTURE(-1),
     FRIENDLY(0),

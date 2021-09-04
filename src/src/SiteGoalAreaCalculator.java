@@ -1,3 +1,5 @@
+package src;
+
 public class SiteGoalAreaCalculator {
 
     public static int threadArea(Site site) {
@@ -13,6 +15,6 @@ public class SiteGoalAreaCalculator {
                         ? site.getRadius() + 500 : 0;
         }
 
-        throw new IllegalArgumentException("No matching SiteGoalAreaCalculator for unit type");
+        throw new IllegalArgumentException("No matching src.SiteGoalAreaCalculator for unit type");
     }
 }

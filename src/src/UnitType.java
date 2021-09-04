@@ -1,3 +1,5 @@
+package src;
+
 public enum UnitType {
     QUEEN(-1, -1),
     KNIGHT(0, 80),
