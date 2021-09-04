@@ -1,8 +1,12 @@
 package src;
 
 import java.awt.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.*;
+import java.util.Optional;
+import java.util.Scanner;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -96,6 +100,7 @@ class Player {
         myArcherBarracks = new LinkedList<>();
         myKnightBarracks = new LinkedList<>();
         myGiantBarracks = new LinkedList<>();
+        myMines = new LinkedList<>();
         goldIncome = 0;
 
         sites.forEach(site -> {
@@ -167,8 +172,6 @@ class Player {
 
             if (unit.getOwner().equals(OwnerType.FRIENDLY) && unit.getUnitType().equals(UnitType.QUEEN)) {
                 ourQueen = unit;
-                System.err.println("ourQueen: " + ourQueen.position);
-                System.err.println("ourQueen: " + getZoneCoordinate(ourQueen.position));
 
                 if (iAmBlue == null) {
                     double distanceFromTopLeft = Math.abs(ourQueen.position.distance(0, 0));
@@ -191,6 +194,11 @@ class Player {
                 myKnights.add(unit);
             }
         }
+
+        System.err.println("ourQueen: " + ourQueen.position);
+        System.err.println("ourQueen: " + getZoneCoordinate(ourQueen.position));
+        System.err.println("Distance between queens: " + Math.abs(ourQueen.position.distance(theirQueen.position)));
+
     }
 
     private static void buildBuildingsOffence() {
@@ -264,6 +272,7 @@ class Player {
                 if (towerDefenceValue > 50) {
                     //Fort is build now
                     fortDefence = true;
+                    System.err.println("fortDefence");
 
                     HashMap<NavMeshMapTypes, Integer> typeWeights = new HashMap<NavMeshMapTypes, Integer>() {
                         {
@@ -317,14 +326,17 @@ class Player {
         String order = "MOVE " + moveToThisPoint.x + " " + moveToThisPoint.y;
         boolean gotOrder = false;
 
-        if (fortDefence && !gotOrder ) {
+        if (fortDefence && !gotOrder) {
             gotOrder = true;
         }
+
 
         if (defence && !gotOrder) {
             boolean finalStrongDefence = strongDefence;
             Optional<Site> closestNonFriendlySite = sites.stream()
                     .filter(distanceIsBelow(moveToThisPoint, radiusToBuildBuilding))
+                    .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.BARRACKS) ||
+                            !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
                     .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
                     .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) || finalStrongDefence)
                     .min(distanceTo(ourQueen.getPosition()));
@@ -357,7 +369,10 @@ class Player {
                             site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
                     .min(distanceTo(ourQueen.getPosition()));
 
-            if (closestNonFriendlySite.isPresent() && distanceIsBelow(theirQueen.position, radiusToBuildBuildingCloseToEnemyQueen).test(closestNonFriendlySite.get())) {
+            System.err.println("My mines count: " + myMines.size());
+            if (closestNonFriendlySite.isPresent() &&
+                    (distanceIsBelow(theirQueen.position, radiusToBuildBuildingCloseToEnemyQueen).test(closestNonFriendlySite.get()) ||
+                            myMines.size() >= 3)) {
                 order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " BARRACKS-KNIGHT";
                 gotOrder = true;
             }
