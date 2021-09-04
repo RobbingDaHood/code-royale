@@ -65,10 +65,17 @@ public class NavMeshIsh2D {
                 .map(entryset -> maps.get(entryset.getKey())[position.x][position.y] * entryset.getValue())
                 .reduce(0, Integer::sum);
     }
-
     public void insertGradiantValue(Point startingPoint, int cost, int costDecreasePrZone, int maxRange, NavMeshMapTypes navMeshMapTypes) {
+        insertValue(startingPoint, cost, costDecreasePrZone, maxRange, navMeshMapTypes, true);
+    }
+
+    public void insertValue(Point startingPoint, int cost, int costDecreasePrZone, int maxRange, NavMeshMapTypes navMeshMapTypes, boolean shouldSum) {
         int[][] map = maps.get(navMeshMapTypes);
-        updateValues(cost, startingPoint.y, startingPoint.x, map);
+        if (shouldSum) {
+            sumValues(cost, startingPoint.y, startingPoint.x, map);
+        } else {
+            maxValues(cost, startingPoint.y, startingPoint.x, map);
+        }
 
         int count = 1;
         for (int currentCost = cost - costDecreasePrZone; currentCost > 0 && count <= maxRange; currentCost -= costDecreasePrZone) {
@@ -79,7 +86,11 @@ public class NavMeshIsh2D {
             if (currentX < heightInZone) {
                 for (int currentY = startingPoint.y - count; currentY <= startingPoint.y + count; currentY++) {
                     if (currentY >= 0 && currentY < widthInZones) {
-                        updateValues(currentCost, currentY, currentX, map);
+                        if (shouldSum) {
+                            sumValues(currentCost, currentY, currentX, map);
+                        } else {
+                            maxValues(currentCost, currentY, currentX, map);
+                        }
                     }
                 }
             }
@@ -89,7 +100,11 @@ public class NavMeshIsh2D {
             if (currentX >= 0) {
                 for (int currentY = startingPoint.y - count; currentY <= startingPoint.y + count; currentY++) {
                     if (currentY >= 0 && currentY < widthInZones) {
-                        updateValues(currentCost, currentY, currentX, map);
+                        if (shouldSum) {
+                            sumValues(currentCost, currentY, currentX, map);
+                        } else {
+                            maxValues(currentCost, currentY, currentX, map);
+                        }
                     }
                 }
             }
@@ -99,7 +114,11 @@ public class NavMeshIsh2D {
             if (currentY < widthInZones) {
                 for (currentX = startingPoint.x - count + 1; currentX <= startingPoint.x + count - 1; currentX++) {
                     if (currentX >= 0 && currentX < heightInZone) {
-                        updateValues(currentCost, currentY, currentX, map);
+                        if (shouldSum) {
+                            sumValues(currentCost, currentY, currentX, map);
+                        } else {
+                            maxValues(currentCost, currentY, currentX, map);
+                        }
                     }
                 }
             }
@@ -109,7 +128,11 @@ public class NavMeshIsh2D {
             if (currentY >= 0) {
                 for (currentX = startingPoint.x - count + 1; currentX <= startingPoint.x + count - 1; currentX++) {
                     if (currentX >= 0 && currentX < heightInZone) {
-                        updateValues(currentCost, currentY, currentX, map);
+                        if (shouldSum) {
+                            sumValues(currentCost, currentY, currentX, map);
+                        } else {
+                            maxValues(currentCost, currentY, currentX, map);
+                        }
                     }
                 }
             }
@@ -119,9 +142,14 @@ public class NavMeshIsh2D {
 
     }
 
-    private void updateValues(int currentCost, int currentY, int currentX, int[][] map) {
+    private void sumValues(int currentCost, int currentY, int currentX, int[][] map) {
         int tempCost = map[currentX][currentY];
         map[currentX][currentY] = tempCost + currentCost;
+    }
+
+    private void maxValues(int currentCost, int currentY, int currentX, int[][] map) {
+        int tempCost = map[currentX][currentY];
+        map[currentX][currentY] = Math.max(tempCost, currentCost);
     }
 
     public void printMaps() {

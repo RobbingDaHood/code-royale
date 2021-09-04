@@ -49,6 +49,21 @@ class NavMeshIsh2DTest {
         assertEquals(98, navMeshIsh2D.maps.get(NavMeshMapTypes.COST)[3][4]);
     }
 
+
+    @Test
+    public void simpleAddMax() {
+        NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(3, 3);
+
+        navMeshIsh2D.insertValue(new Point(2, 2), 100, 1, 99, NavMeshMapTypes.COST, false);
+        navMeshIsh2D.insertValue(new Point(0, 2), 100, 1, 99, NavMeshMapTypes.COST, false);
+
+        navMeshIsh2D.printMaps();
+
+        assertEquals(100, navMeshIsh2D.maps.get(NavMeshMapTypes.COST)[2][2]);
+        assertEquals(99, navMeshIsh2D.maps.get(NavMeshMapTypes.COST)[1][1]);
+        assertEquals(98, navMeshIsh2D.maps.get(NavMeshMapTypes.COST)[0][0]);
+    }
+
     @Test
     public void simpleGetBestNeighbour() {
         NavMeshIsh2D navMeshIsh2D = new NavMeshIsh2D(20, 15);
