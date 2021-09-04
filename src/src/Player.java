@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Auto-generated code below aims at helping you parse
@@ -33,6 +32,7 @@ class Player {
     private static List<Site> enemyTowers = new LinkedList<>();
     private static List<Site> myTowers = new LinkedList<>();
     private static List<Site> myMines = new LinkedList<>();
+    private static List<Site> enemyMines = new LinkedList<>();
     private static List<Site> myArcherBarracks = new LinkedList<>();
     private static List<Site> myKnightBarracks = new LinkedList<>();
     private static List<Site> myGiantBarracks = new LinkedList<>();
@@ -47,6 +47,8 @@ class Player {
 
     private static int granularity = 100;
     private static boolean hideBehindFort = false;
+
+    private static GameStates gameState = GameStates.STARTING;
 
     public static void main(String args[]) {
         Scanner in = new Scanner(System.in);
@@ -73,7 +75,7 @@ class Player {
             //Else build many mines and spam knights
             //Maybe queen movement is still the same.
 
-            buildBuildingsOffence();
+            buildBuildingsOffenceII();
             trainUnitsOffence();
 
             gameTurns++;
@@ -106,6 +108,7 @@ class Player {
         myGiantBarracks = new LinkedList<>();
         enemyKnightBarracks = new LinkedList<>();
         myMines = new LinkedList<>();
+        enemyMines = new LinkedList<>();
         goldIncome = 0;
 
         sites.forEach(site -> {
@@ -149,12 +152,15 @@ class Player {
                 navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), NavMeshMapTypes.BLOCKER);
                 navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 20, 1, getZoneCoordinate(site.getSiteStatus().getTowerRange()), NavMeshMapTypes.TOWER_PROTECTION);
 //                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), -2, 0, getZoneCoordinate(site.getRadius()), src.NavMeshMapTypes.ENEMY_KNIGHTS);
-            } else if (site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
-                    site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
-                myMines.add(site);
-                goldIncome += site.getSiteStatus().getParam1();
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), NavMeshMapTypes.BLOCKER);
-                navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 20, 1, getZoneCoordinate(500), NavMeshMapTypes.NON_TOWER_PLACES_TO_BUILD);
+            } else if (site.getSiteStatus().getStructureType().equals(StructureType.MINE)) {
+                if (site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
+                    myMines.add(site);
+                    goldIncome += site.getSiteStatus().getParam1();
+                    navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 99999, 0, getZoneCoordinate(site.getRadius()), NavMeshMapTypes.BLOCKER);
+                    navMeshIsh2D.insertGradiantValue(getZoneCoordinate(site.position), 20, 1, getZoneCoordinate(500), NavMeshMapTypes.NON_TOWER_PLACES_TO_BUILD);
+                } else {
+                    enemyMines.add(site);
+                }
             } else if (!site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY)) {
 //                System.err.println("site.position: " + site.position);
 //                System.err.println("getZoneCoordinate(site.position): " + getZoneCoordinate(site.position));
@@ -214,6 +220,226 @@ class Player {
 
     }
 
+    private static void buildBuildingsOffenceII() {
+        System.err.println("Gamestate: " + gameState);
+
+        if (gameState.equals(GameStates.STARTING)) {
+            handleStarting();
+        } else if (gameState.equals(GameStates.EXPAND)) {
+            handleExpand();
+        } else if (gameState.equals(GameStates.DEFEND_MODERATE)) {
+            handleDefendModerate();
+        } else if (gameState.equals(GameStates.DEFEND_IN_FORT)) {
+            handleDefendInFort();
+        }
+
+    }
+
+    private static void handleDefendInFort() {
+        handleDefendInFortDo();
+
+        boolean defence = navMeshIsh2D.maps.get(NavMeshMapTypes.ENEMY_KNIGHTS)
+                [getZoneCoordinate(ourQueen.position.x)][getZoneCoordinate(ourQueen.position.y)] > 10;
+
+//        if (!defence) {
+//            gameState = GameStates.EXPAND;
+//        } else {
+//            HashMap<NavMeshMapTypes, Integer> towerDefenceWeight = new HashMap<NavMeshMapTypes, Integer>() {
+//                {
+//                    put(NavMeshMapTypes.TOWER_PROTECTION, 1);
+//                }
+//            };
+//            navMeshIsh2D.printPosition(getZoneCoordinate(ourQueen.position), 1, towerDefenceWeight);
+//            Point getBestTowerDefenceZone = navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position), towerDefenceWeight);
+//
+//            int towerDefenceValue = navMeshIsh2D.getCostBenefit(getBestTowerDefenceZone, towerDefenceWeight);
+//
+//            System.err.println("towerDefence: " + towerDefenceValue + ", " + getBestTowerDefenceZone);
+//            if (towerDefenceValue > 50) {
+//                gameState = GameStates.DEFEND_IN_FORT;
+//            } else {
+//                gameState = GameStates.DEFEND_MODERATE;
+//            }
+//        }
+    }
+
+    private static void handleDefendInFortDo() {
+        String order;
+        Point moveToThisPoint;
+
+        Optional<Site> closestEnemyBaracks = enemyKnightBarracks.stream()
+                .min(distanceTo(ourQueen.position));
+        Optional<Site> defensiveTower = Optional.empty();
+
+        HashMap<NavMeshMapTypes, Integer> typeWeights = new HashMap<NavMeshMapTypes, Integer>() {
+            {
+                put(NavMeshMapTypes.ENEMY_KNIGHTS, -2);
+                put(NavMeshMapTypes.BLOCKER, -1);
+                put(NavMeshMapTypes.TOWER_PROTECTION, 1);
+            }
+        };
+
+        if (closestEnemyBaracks.isPresent()) {
+            defensiveTower = myTowers.stream()
+                    .max(distanceTo(closestEnemyBaracks.get().position));
+        }
+
+        Point getBestTowerDefenceZone;
+        if (defensiveTower.isPresent()) {
+            navMeshIsh2D.printPosition(getZoneCoordinate(defensiveTower.get().position), 1, typeWeights);
+            getBestTowerDefenceZone = navMeshIsh2D.getBestNeighbour(getZoneCoordinate(defensiveTower.get().position), typeWeights);
+        } else {
+            navMeshIsh2D.printPosition(getZoneCoordinate(ourQueen.position), 1, typeWeights);
+            getBestTowerDefenceZone = navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position), typeWeights);
+        }
+
+        moveToThisPoint = getMapCoordinate(getBestTowerDefenceZone);
+
+        Optional<Site> closestFreindlyTowerSite = myTowers.stream()
+                .filter(distanceIsBelow(moveToThisPoint, 300))
+                .filter(site -> site.getSiteStatus().getStructureType().equals(StructureType.TOWER) &&
+                        site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
+                .min(distanceTo(moveToThisPoint));
+
+        if (closestFreindlyTowerSite.isPresent()) {
+            order = "BUILD " + closestFreindlyTowerSite.get().getSiteId() + " TOWER";
+        } else {
+            order = "MOVE " + moveToThisPoint.x + " " + moveToThisPoint.y;
+        }
+
+        System.out.println(order);
+    }
+
+    private static void handleDefendModerate() {
+        handleDefendModerateDo();
+        handleDefendModerateChangeState();
+    }
+
+    private static void handleDefendModerateChangeState() {
+        boolean defence = navMeshIsh2D.maps.get(NavMeshMapTypes.ENEMY_KNIGHTS)
+                [getZoneCoordinate(ourQueen.position.x)][getZoneCoordinate(ourQueen.position.y)] > 10;
+
+        if (!defence) {
+            gameState = GameStates.EXPAND;
+        } else {
+            HashMap<NavMeshMapTypes, Integer> towerDefenceWeight = new HashMap<NavMeshMapTypes, Integer>() {
+                {
+                    put(NavMeshMapTypes.TOWER_PROTECTION, 1);
+                }
+            };
+            navMeshIsh2D.printPosition(getZoneCoordinate(ourQueen.position), 1, towerDefenceWeight);
+            Point getBestTowerDefenceZone = navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position), towerDefenceWeight);
+
+            int towerDefenceValue = navMeshIsh2D.getCostBenefit(getBestTowerDefenceZone, towerDefenceWeight);
+
+            System.err.println("towerDefence: " + towerDefenceValue + ", " + getBestTowerDefenceZone);
+            if (towerDefenceValue > 50) {
+                gameState = GameStates.DEFEND_IN_FORT;
+            }
+        }
+    }
+
+    private static void handleDefendModerateDo() {
+        String order;
+
+        Point moveToThisPoint = getMapCoordinate(navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position),
+                new HashMap<NavMeshMapTypes, Integer>() {
+                    {
+                        put(NavMeshMapTypes.NON_FRIENDLY_PLACES_TO_BUILD, 1);
+                        put(NavMeshMapTypes.ENEMY_KNIGHTS, -2);
+                        put(NavMeshMapTypes.BLOCKER, -1);
+                    }
+                }));
+
+        Optional<Site> closestNonFriendlySite = sites.stream()
+                .filter(distanceIsBelow(moveToThisPoint, 600))
+                .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY))
+                .filter(site -> !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
+                .min(distanceTo(ourQueen.position));
+
+        if (closestNonFriendlySite.isPresent()) {
+            order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " TOWER";
+        } else {
+            order = "MOVE " + moveToThisPoint.x + " " + moveToThisPoint.y;
+        }
+
+        System.out.println(order);
+    }
+
+    private static void handleExpand() {
+        handleExpandDo();
+        handleExpandChangeState();
+    }
+
+    private static void handleExpandChangeState() {
+        boolean defence = navMeshIsh2D.maps.get(NavMeshMapTypes.ENEMY_KNIGHTS)
+                [getZoneCoordinate(ourQueen.position.x)][getZoneCoordinate(ourQueen.position.y)] > 10;
+
+        if (defence) {
+            gameState = GameStates.DEFEND_MODERATE;
+        }
+    }
+
+    private static void handleExpandDo() {
+        String order;
+        Point moveToThisPoint = getMapCoordinate(navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position),
+                new HashMap<NavMeshMapTypes, Integer>() {
+                    {
+                        put(NavMeshMapTypes.NON_FRIENDLY_PLACES_TO_BUILD, 1);
+                        put(NavMeshMapTypes.BLOCKER, -1);
+                    }
+                }));
+
+        Optional<Site> closestNonFriendlySite = closestNonFriendlySite(moveToThisPoint, 600);
+
+        if (closestNonFriendlySite.isPresent()) {
+            order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " " + "MINE";
+        } else {
+            order = "MOVE " + moveToThisPoint.x + " " + moveToThisPoint.y;
+        }
+
+        System.out.println(order);
+    }
+
+    private static Optional<Site> closestNonFriendlySite(Point moveToThisPoint, int i) {
+        return sites.stream()
+                .filter(site -> site.getSiteStatus().getGold() > 10)
+                .filter(distanceIsBelow(moveToThisPoint, i))
+                .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.ENEMY) ||
+                        !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
+                .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) ||
+                        (site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
+                                site.getSiteStatus().getMaxMineSize() > site.getSiteStatus().getParam1()) ||
+                        site.getSiteStatus().getStructureType().equals(StructureType.TOWER)
+                )
+                .min(distanceTo(ourQueen.position));
+    }
+
+    private static void handleStarting() {
+        String order;
+        Point moveToThisPoint = getMapCoordinate(navMeshIsh2D.getBestNeighbour(getZoneCoordinate(ourQueen.position),
+                new HashMap<NavMeshMapTypes, Integer>() {
+                    {
+                        put(NavMeshMapTypes.NON_FRIENDLY_PLACES_TO_BUILD, 1);
+                        put(NavMeshMapTypes.BLOCKER, -1);
+                    }
+                }));
+
+        Optional<Site> closestNonFriendlySite = closestNonFriendlySite(moveToThisPoint, 600);
+
+        if (closestNonFriendlySite.isPresent()) {
+            String buildType = "MINE";
+            if (enemyKnightBarracks.size() > 0 && myKnightBarracks.size() < 1) {
+                buildType = "BARRACKS-KNIGHT";
+            }
+            order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " " + buildType;
+        } else {
+            order = "MOVE " + moveToThisPoint.x + " " + moveToThisPoint.y;
+        }
+
+        System.out.println(order);
+    }
+
     private static void buildBuildingsOffence() {
         boolean defence = navMeshIsh2D.maps.get(NavMeshMapTypes.ENEMY_KNIGHTS)
                 [getZoneCoordinate(ourQueen.position.x)][getZoneCoordinate(ourQueen.position.y)] > 10;
@@ -266,7 +492,7 @@ class Player {
                     //Fort is build now
                     System.err.println("fortDefence");
 
-                    hideBehindFort = true;
+                    hideBehindFort = defenceValue > 40;
 
                     Optional<Site> closestEnemyBaracks = enemyKnightBarracks.stream()
                             .min(distanceTo(ourQueen.position));
@@ -394,17 +620,7 @@ class Player {
         }
 
         if (!defence && !gotOrder) {
-            Optional<Site> closestNonFriendlySite = sites.stream()
-                    .filter(site -> site.getSiteStatus().getGold() > 10)
-                    .filter(distanceIsBelow(moveToThisPoint, radiusToBuildBuilding))
-                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.ENEMY) ||
-                            !site.getSiteStatus().getStructureType().equals(StructureType.TOWER))
-                    .filter(site -> !site.getSiteStatus().getOwner().equals(OwnerType.FRIENDLY) ||
-                            (site.getSiteStatus().getStructureType().equals(StructureType.MINE) &&
-                                    site.getSiteStatus().getMaxMineSize() > site.getSiteStatus().getParam1()) ||
-                            site.getSiteStatus().getStructureType().equals(StructureType.TOWER)
-                    )
-                    .min(distanceTo(ourQueen.position));
+            Optional<Site> closestNonFriendlySite = closestNonFriendlySite(moveToThisPoint, radiusToBuildBuilding);
 
             if (closestNonFriendlySite.isPresent()) {
                 order = "BUILD " + closestNonFriendlySite.get().getSiteId() + " MINE";
@@ -422,24 +638,28 @@ class Player {
         int radiusNotToSpawnFromEnemyQueen = 100;
 
         System.err.println("enemyTowers.size(): " + enemyTowers.size());
-        Stream<String> knightSites = Stream.empty();
-        if (enemyArchers.size() < 6 && isBursting) {
+        List<String> knightSites = new LinkedList<>();
+        if (enemyArchers.size() < 6 && enemyTowers.size() < 6 && (isBursting || GameStates.STARTING.equals(gameState))) {
             knightSites = sitesReadyToTrain.stream()
                     .filter(distanceIsAbove(theirQueen.position, radiusNotToSpawnFromEnemyQueen))
                     .filter(site -> site.getSiteStatus().getUnitType().equals(UnitType.KNIGHT))
                     .filter(canPayForTraining(gold, goldUsed))
                     .sorted(distanceTo(theirQueen.getPosition()))
                     .map(Site::getSiteId)
-                    .map(String::valueOf);
+                    .map(String::valueOf)
+                    .collect(Collectors.toList());
             System.err.println("knightSites: ");
+
+            if (!knightSites.isEmpty() && gameState.equals(GameStates.STARTING)) {
+                gameState = GameStates.EXPAND;
+            }
         }
 
         if (gold > 300) isBursting = true;
         if (gold < 100) isBursting = false;
 
         System.out.println(
-                Stream.of(knightSites)
-                        .flatMap(i -> i)
+                knightSites.stream()
                         .collect(Collectors.joining(" ", "TRAIN ", ""))
                         .trim());
     }
